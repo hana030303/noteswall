@@ -1,0 +1,25 @@
+{
+  "name": "便利貼牆 · Notes Wall",
+  "short_name": "便利貼牆",
+  "description": "雲端即時同步的自由筆記牆",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f1ea",
+  "theme_color": "#f4f1ea",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='36' fill='%23f4f1ea'/%3E%3Crect x='44' y='40' width='104' height='104' rx='8' fill='%23ffd66b' transform='rotate(-5 96 92)'/%3E%3Crect x='52' y='52' width='96' height='96' rx='8' fill='%23ff9d8a' transform='rotate(6 100 100)'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%23f4f1ea'/%3E%3Crect x='118' y='108' width='276' height='276' rx='20' fill='%23ffd66b' transform='rotate(-5 256 246)'/%3E%3Crect x='140' y='140' width='256' height='256' rx='20' fill='%23ff9d8a' transform='rotate(6 268 268)'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

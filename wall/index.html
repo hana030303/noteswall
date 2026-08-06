@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>便利貼牆 · Notes Wall</title>
+
+<!-- PWA -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#f4f1ea">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="便利貼牆">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#f4f1ea; --grid:rgba(120,110,90,.06);
+  --ink:#2b2a27; --muted:#8a857c; --dim:#b6b1a6;
+  --line:#e3ddd0; --card-line:rgba(0,0,0,.06);
+  --accent:#e0714f;
+  --shadow:0 1px 1px rgba(40,35,25,.05),0 10px 24px -12px rgba(40,35,25,.28);
+  --shadow-lift:0 6px 12px rgba(40,35,25,.10),0 26px 50px -18px rgba(40,35,25,.42);
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:'Noto Sans TC',system-ui,sans-serif;
+  background:var(--bg); color:var(--ink);
+  overflow:hidden; -webkit-font-smoothing:antialiased;
+  overscroll-behavior:none; touch-action:none;
+}
+.display{font-family:'Space Grotesk',sans-serif}
+button{font-family:inherit;color:inherit;border:none;background:none;cursor:pointer}
+.hidden{display:none!important}
+
+/* ── GATE ─────────────────────────── */
+#gate{
+  position:fixed;inset:0;z-index:100;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  transition:opacity .6s var(--ease),transform .6s var(--ease),filter .6s var(--ease);
+}
+#gate.out{opacity:0;transform:scale(1.03);filter:blur(10px);pointer-events:none}
+.gate-deco{position:absolute;border-radius:10px;box-shadow:var(--shadow);opacity:.55}
+.gate-inner{position:relative;width:min(360px,86vw);text-align:center;animation:rise .8s var(--ease) both}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.gate-kicker{font-size:11px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:18px}
+.gate-title{font-size:38px;font-weight:700;letter-spacing:-1px;line-height:1;margin-bottom:10px}
+.gate-sub{color:var(--muted);font-size:13px;margin-bottom:34px}
+#gate-input{
+  width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--line);
+  padding:14px 4px;font-size:22px;letter-spacing:8px;text-align:center;color:var(--ink);
+  transition:border-color .35s var(--ease);
+}
+#gate-input::placeholder{letter-spacing:2px;color:var(--dim);font-size:14px}
+#gate-input:focus{outline:none;border-color:var(--accent)}
+.gate-btn{margin-top:28px;width:100%;padding:14px;border-radius:999px;background:var(--ink);color:var(--bg);font-weight:600;font-size:14px;transition:transform .25s var(--ease),opacity .25s}
+.gate-btn:hover{transform:translateY(-2px)}
+.gate-btn:active{transform:translateY(0)}
+.gate-err{color:var(--accent);font-size:12px;height:16px;margin-top:14px;opacity:0;transition:opacity .3s}
+.shake{animation:shake .4s var(--ease)}
+@keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(3px)}30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}
+
+/* ── TOP BAR ──────────────────────── */
+#bar{
+  position:fixed;top:0;left:0;right:0;z-index:40;
+  display:flex;align-items:center;gap:12px;
+  padding:calc(env(safe-area-inset-top,0) + 12px) 16px 12px;
+  background:linear-gradient(var(--bg),rgba(244,241,234,.75) 70%,transparent);
+  pointer-events:none;
+}
+#bar>*{pointer-events:auto}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;letter-spacing:-.3px}
+.brand .dot{width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,#ffd66b,#ff9d8a);box-shadow:var(--shadow);flex:none}
+.brand small{font-weight:400;color:var(--muted);font-size:11px;letter-spacing:1px}
+.spacer{flex:1}
+.status{
+  display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);
+  background:#fff;border:1px solid var(--line);padding:6px 11px;border-radius:999px;box-shadow:var(--shadow);
+  white-space:nowrap;
+}
+.status .led{width:7px;height:7px;border-radius:50%;background:var(--dim);transition:background .3s}
+.status.on .led{background:#57b56f;box-shadow:0 0 0 3px rgba(87,181,111,.18)}
+.status.local .led{background:#e0a94f;box-shadow:0 0 0 3px rgba(224,169,79,.18)}
+.status.err .led{background:var(--accent);box-shadow:0 0 0 3px rgba(224,113,79,.18)}
+.icon-btn{
+  width:38px;height:38px;border-radius:11px;background:#fff;border:1px solid var(--line);
+  box-shadow:var(--shadow);display:grid;place-items:center;font-size:17px;
+  transition:transform .2s var(--ease),background .2s;
+}
+.icon-btn:hover{transform:translateY(-2px)}
+.icon-btn:active{transform:translateY(0)}
+
+/* ── WALL ─────────────────────────── */
+#wall{
+  position:fixed;inset:0;z-index:1;
+  background-image:radial-gradient(var(--grid) 1.4px,transparent 1.4px);
+  background-size:26px 26px;
+}
+#empty{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;color:var(--dim);pointer-events:none;text-align:center;padding:0 24px;
+}
+#empty .big{font-size:15px;color:var(--muted);font-weight:500}
+#empty .sm{font-size:12.5px}
+
+/* Sticky note */
+.note{
+  position:absolute;width:210px;min-height:150px;
+  padding:16px 15px 34px;border-radius:3px;
+  box-shadow:var(--shadow);cursor:grab;
+  transition:box-shadow .25s var(--ease),transform .12s var(--ease);
+  display:flex;flex-direction:column;
+  will-change:transform;
+}
+.note:hover{box-shadow:var(--shadow-lift)}
+.note.drag{cursor:grabbing;box-shadow:var(--shadow-lift);transition:box-shadow .2s var(--ease);z-index:60!important}
+.note::before{
+  content:'';position:absolute;top:-7px;left:50%;transform:translateX(-50%) rotate(-3deg);
+  width:52px;height:16px;background:rgba(255,255,255,.42);
+  border:1px solid rgba(0,0,0,.05);border-radius:2px;
+  box-shadow:0 2px 4px rgba(0,0,0,.08);
+}
+.note .txt{
+  flex:1;font-size:15px;line-height:1.5;color:rgba(0,0,0,.78);
+  outline:none;word-break:break-word;white-space:pre-wrap;min-height:70px;
+}
+.note .txt:empty::before{content:attr(data-ph);color:rgba(0,0,0,.28)}
+.note .foot{
+  position:absolute;left:12px;right:10px;bottom:9px;
+  display:flex;align-items:center;gap:5px;
+  opacity:0;transition:opacity .2s;
+}
+.note:hover .foot,.note.editing .foot{opacity:1}
+.swatch{width:15px;height:15px;border-radius:50%;border:1.5px solid rgba(0,0,0,.12);cursor:pointer;transition:transform .15s}
+.swatch:hover{transform:scale(1.18)}
+.swatch.sel{box-shadow:0 0 0 2px rgba(0,0,0,.35)}
+.note .del{
+  margin-left:auto;font-size:14px;color:rgba(0,0,0,.32);width:22px;height:22px;
+  border-radius:6px;display:grid;place-items:center;transition:background .2s,color .2s;
+}
+.note .del:hover{background:rgba(0,0,0,.08);color:rgba(0,0,0,.6)}
+.note .stamp{position:absolute;top:14px;right:13px;font-size:10px;color:rgba(0,0,0,.28);font-family:'Space Grotesk'}
+
+/* FAB */
+#fab{
+  position:fixed;z-index:45;right:20px;bottom:calc(env(safe-area-inset-bottom,0) + 20px);
+  width:60px;height:60px;border-radius:20px;
+  background:var(--ink);color:var(--bg);font-size:30px;line-height:1;
+  display:grid;place-items:center;box-shadow:var(--shadow-lift);
+  transition:transform .25s var(--ease);
+}
+#fab:hover{transform:translateY(-3px) rotate(90deg)}
+#fab:active{transform:scale(.94)}
+
+/* toast */
+#toast{
+  position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0) + 92px);transform:translateX(-50%) translateY(20px);
+  z-index:80;background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;
+  font-size:13px;box-shadow:var(--shadow-lift);opacity:0;pointer-events:none;
+  transition:opacity .3s var(--ease),transform .3s var(--ease);white-space:nowrap;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:560px){
+  .note{width:44vw;min-width:150px}
+  .brand small{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ PASSWORD GATE ═══ -->
+<div id="gate">
+  <div class="gate-deco" style="width:120px;height:120px;background:#ffd66b;top:22%;left:16%;transform:rotate(-8deg)"></div>
+  <div class="gate-deco" style="width:90px;height:90px;background:#ff9d8a;bottom:20%;right:18%;transform:rotate(7deg)"></div>
+  <div class="gate-deco" style="width:70px;height:70px;background:#9ad0c2;top:30%;right:22%;transform:rotate(4deg)"></div>
+  <div class="gate-inner">
+    <div class="gate-kicker">Notes Wall</div>
+    <div class="gate-title display">便利貼牆</div>
+    <div class="gate-sub">輸入密碼以進入你的筆記牆</div>
+    <input id="gate-input" type="password" inputmode="numeric" placeholder="PASSWORD" autocomplete="off" spellcheck="false">
+    <button class="gate-btn" id="gate-btn">進入</button>
+    <div class="gate-err" id="gate-err">密碼不正確</div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="bar" class="hidden">
+  <div class="brand"><span class="dot"></span>便利貼牆 <small id="brand-tag"></small></div>
+  <div class="spacer"></div>
+  <div class="status local" id="status"><span class="led"></span><span id="status-txt">本機模式</span></div>
+  <button class="icon-btn" id="btn-lock" title="鎖定">🔒</button>
+</div>
+
+<div id="wall" class="hidden">
+  <div id="empty">
+    <div class="big">牆上還沒有便利貼</div>
+    <div class="sm">點右下角的「＋」貼上第一張，拖曳可移動</div>
+  </div>
+</div>
+
+<button id="fab" class="hidden" title="新增便利貼">＋</button>
+<div id="toast"></div>
+
+<script type="module">
+/* ════════════════════════════════════════════════════════════
+   設定區 —— 你只需要改這兩塊
+   ════════════════════════════════════════════════════════════ */
+
+// ① 進入密碼（改成你要的）
+const PASSCODE = '1234';
+
+// ② Firebase 設定：貼上你的專案設定就會啟用「雲端即時同步」。
+//    還沒設定前，App 會用「本機模式」（資料存在這台裝置）先運作。
+const firebaseConfig = {
+  apiKey: "AIzaSyBbgYS1ALqYm9WQ0CwpU4g6aPVYY3K0qYc",
+  authDomain: "work-e04df.firebaseapp.com",
+  projectId: "work-e04df",
+  storageBucket: "work-e04df.firebasestorage.app",
+  messagingSenderId: "970046892491",
+  appId: "1:970046892491:web:9d5e5a0a14508a3f376e4e",
+  measurementId: "G-WD9F8WQ2KG"};
+// 同步用的「牆」名稱：不同名稱＝不同資料。想跟別人共用同一面牆，用同一個名稱。
+const BOARD_ID = 'main';
+
+/* ════════════════════════════════════════════════════════════
+   以下不用改
+   ════════════════════════════════════════════════════════════ */
+
+const COLORS = ['#ffe08a','#ff9d8a','#9ad0c2','#a7c7ff','#e7b6ff','#f6f2e9'];
+const LS_KEY = 'noteswall:' + BOARD_ID;
+const $ = s => document.querySelector(s);
+
+const gate = $('#gate'), gInput = $('#gate-input'), gErr = $('#gate-err');
+const bar = $('#bar'), wall = $('#wall'), fab = $('#fab');
+const emptyHint = $('#empty'), statusEl = $('#status'), statusTxt = $('#status-txt');
+
+let notes = {};            // id -> {text,color,x,y,z,updatedAt}
+let cloud = null;          // firestore sync handle, or null in local mode
+let topZ = 1;
+let suppressRender = new Set(); // ids currently being dragged/edited locally
+
+/* ── 密碼閘 ─────────────────────────── */
+const AUTH_KEY = 'noteswall:auth';
+function tryUnlock(){
+  if (gInput.value === PASSCODE){
+    sessionStorage.setItem(AUTH_KEY, '1');
+    openApp();
+  } else {
+    gErr.style.opacity = 1;
+    gInput.value = '';
+    gInput.closest('.gate-inner').classList.add('shake');
+    setTimeout(()=>gInput.closest('.gate-inner').classList.remove('shake'), 450);
+  }
+}
+$('#gate-btn').onclick = tryUnlock;
+gInput.addEventListener('keydown', e => { if(e.key==='Enter') tryUnlock(); });
+gInput.addEventListener('input', ()=> gErr.style.opacity = 0);
+
+$('#btn-lock').onclick = ()=>{
+  sessionStorage.removeItem(AUTH_KEY);
+  location.reload();
+};
+
+function openApp(){
+  gate.classList.add('out');
+  setTimeout(()=>gate.classList.add('hidden'), 620);
+  bar.classList.remove('hidden');
+  wall.classList.remove('hidden');
+  fab.classList.remove('hidden');
+  startData();
+}
+
+if (sessionStorage.getItem(AUTH_KEY) === '1') openApp();
+else setTimeout(()=>gInput.focus(), 400);
+
+/* ── 資料層：Firebase 或本機 ───────────── */
+async function startData(){
+  const configured = !Object.values(firebaseConfig).some(v => !v || v === 'PASTE_HERE');
+  if (configured){
+    try { await initCloud(); return; }
+    catch(err){ console.error(err); setStatus('err','雲端連線失敗，改用本機'); }
+  }
+  // 本機模式
+  notes = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+  normaliseZ();
+  setStatus('local', firebaseConfig.apiKey==='PASTE_HERE' ? '本機模式（未設定雲端）' : '本機模式');
+  renderAll();
+}
+
+function saveLocal(){
+  if (cloud) return; // cloud mode persists per-note
+  localStorage.setItem(LS_KEY, JSON.stringify(notes));
+}
+
+async function initCloud(){
+  const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js');
+  const fs = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
+  const app = initializeApp(firebaseConfig);
+  const db  = fs.getFirestore(app);
+  const col = fs.collection(db, 'walls', BOARD_ID, 'notes');
+
+  cloud = {
+    set: (id, data) => fs.setDoc(fs.doc(col, id), data, { merge:true }),
+    del: (id) => fs.deleteDoc(fs.doc(col, id)),
+    now: () => Date.now()
+  };
+
+  // 即時監聽：任何裝置的變更都會即時進來
+  fs.onSnapshot(col,
+    snap => {
+      snap.docChanges().forEach(ch => {
+        const id = ch.doc.id;
+        if (ch.type === 'removed'){ delete notes[id]; removeNoteEl(id); return; }
+        if (suppressRender.has(id)) return;        // 正在本機拖曳/編輯，先不覆蓋
+        notes[id] = ch.doc.data();
+        upsertNoteEl(id);
+      });
+      normaliseZ();
+      toggleEmpty();
+      setStatus('on','雲端已同步');
+    },
+    err => { console.error(err); setStatus('err','同步中斷'); }
+  );
+  setStatus('on','雲端已同步');
+  $('#brand-tag').textContent = '· ' + BOARD_ID;
+}
+
+function setStatus(cls, txt){
+  statusEl.className = 'status ' + cls;
+  statusTxt.textContent = txt;
+}
+
+/* ── 便利貼操作 ─────────────────────── */
+function uid(){ return 'n' + Math.random().toString(36).slice(2,9) + (cloud?cloud.now():performance.now()|0).toString(36); }
+function normaliseZ(){ topZ = Math.max(1, ...Object.values(notes).map(n=>n.z||1)); }
+function stamp(ts){ if(!ts) return ''; const d=new Date(ts); return `${d.getMonth()+1}/${d.getDate()}`; }
+
+function addNote(){
+  const id = uid();
+  const pad = 90;
+  const x = pad + Math.random()*(Math.max(60,innerWidth  - 210 - pad*2));
+  const y = 120 + Math.random()*(Math.max(60,innerHeight - 260));
+  const n = {
+    text:'', color: COLORS[Math.floor(Math.random()*3)],
+    x:Math.round(x), y:Math.round(y), z: ++topZ,
+    updatedAt: cloud?cloud.now():Date.now()
+  };
+  notes[id] = n;
+  upsertNoteEl(id);
+  toggleEmpty();
+  persist(id);
+  const el = wall.querySelector(`[data-id="${id}"] .txt`);
+  if (el){ el.focus(); }
+  toast('已新增');
+}
+
+function persist(id){
+  const n = notes[id];
+  if (!n) return;
+  if (cloud) cloud.set(id, n).catch(e=>{ console.error(e); setStatus('err','儲存失敗'); });
+  else saveLocal();
+}
+
+function deleteNote(id){
+  delete notes[id];
+  removeNoteEl(id);
+  toggleEmpty();
+  if (cloud) cloud.del(id).catch(console.error);
+  else saveLocal();
+  toast('已刪除');
+}
+
+/* ── DOM 渲染 ───────────────────────── */
+function renderAll(){
+  wall.querySelectorAll('.note').forEach(el=>el.remove());
+  Object.keys(notes).forEach(upsertNoteEl);
+  toggleEmpty();
+}
+
+function removeNoteEl(id){
+  const el = wall.querySelector(`.note[data-id="${id}"]`);
+  if (el) el.remove();
+}
+
+function upsertNoteEl(id){
+  const n = notes[id];
+  if (!n) return;
+  let el = wall.querySelector(`.note[data-id="${id}"]`);
+  if (!el){
+    el = document.createElement('div');
+    el.className = 'note';
+    el.dataset.id = id;
+    el.innerHTML = `
+      <div class="stamp"></div>
+      <div class="txt" contenteditable="true" spellcheck="false" data-ph="寫點什麼…"></div>
+      <div class="foot">
+        ${COLORS.map(c=>`<span class="swatch" data-c="${c}" style="background:${c}"></span>`).join('')}
+        <span class="del" title="刪除">✕</span>
+      </div>`;
+    wall.appendChild(el);
+    wireNote(el, id);
+  }
+  const txt = el.querySelector('.txt');
+  if (document.activeElement !== txt && txt.innerText !== (n.text||'')) txt.innerText = n.text || '';
+  el.style.background = n.color;
+  el.style.left = (n.x||40) + 'px';
+  el.style.top  = (n.y||120) + 'px';
+  el.style.zIndex = n.z || 1;
+  el.querySelector('.stamp').textContent = stamp(n.updatedAt);
+  el.querySelectorAll('.swatch').forEach(s=>s.classList.toggle('sel', s.dataset.c===n.color));
+}
+
+function wireNote(el, id){
+  const txt = el.querySelector('.txt');
+
+  // 編輯文字（debounce 存檔）
+  let t;
+  txt.addEventListener('focus', ()=>{ el.classList.add('editing'); suppressRender.add(id); bumpZ(id, el); });
+  txt.addEventListener('input', ()=>{
+    if(!notes[id]) return;
+    notes[id].text = txt.innerText;
+    notes[id].updatedAt = cloud?cloud.now():Date.now();
+    el.querySelector('.stamp').textContent = stamp(notes[id].updatedAt);
+    clearTimeout(t); t = setTimeout(()=>persist(id), 500);
+  });
+  txt.addEventListener('blur', ()=>{
+    el.classList.remove('editing');
+    suppressRender.delete(id);
+    clearTimeout(t); persist(id);
+  });
+
+  // 換色
+  el.querySelectorAll('.swatch').forEach(sw=>{
+    sw.addEventListener('click', e=>{
+      e.stopPropagation();
+      if(!notes[id]) return;
+      notes[id].color = sw.dataset.c;
+      notes[id].updatedAt = cloud?cloud.now():Date.now();
+      upsertNoteEl(id);
+      persist(id);
+    });
+  });
+
+  // 刪除
+  el.querySelector('.del').addEventListener('click', e=>{
+    e.stopPropagation();
+    if (confirm('刪除這張便利貼？')) deleteNote(id);
+  });
+
+  // 拖曳（滑鼠 + 觸控）
+  el.addEventListener('pointerdown', e=>{
+    if (e.target.closest('.txt') || e.target.closest('.swatch') || e.target.closest('.del')) return;
+    e.preventDefault();
+    const n = notes[id]; if(!n) return;
+    bumpZ(id, el);
+    suppressRender.add(id);
+    el.classList.add('drag');
+    el.setPointerCapture(e.pointerId);
+    const sx = e.clientX, sy = e.clientY, ox = n.x, oy = n.y;
+    let moved = false;
+
+    const move = ev=>{
+      const nx = Math.max(4, ox + (ev.clientX - sx));
+      const ny = Math.max(60, oy + (ev.clientY - sy));
+      if (Math.abs(ev.clientX-sx)+Math.abs(ev.clientY-sy) > 3) moved = true;
+      n.x = Math.round(nx); n.y = Math.round(ny);
+      el.style.left = n.x + 'px';
+      el.style.top  = n.y + 'px';
+    };
+    const up = ev=>{
+      el.releasePointerCapture(e.pointerId);
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up);
+      el.classList.remove('drag');
+      suppressRender.delete(id);
+      if (moved){ n.updatedAt = cloud?cloud.now():Date.now(); persist(id); }
+    };
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', up);
+  });
+}
+
+function bumpZ(id, el){
+  if(!notes[id]) return;
+  if (notes[id].z !== topZ){
+    notes[id].z = ++topZ;
+    el.style.zIndex = topZ;
+    persist(id);
+  }
+}
+
+function toggleEmpty(){
+  emptyHint.classList.toggle('hidden', Object.keys(notes).length > 0);
+}
+
+/* ── 雜項 ──────────────────────────── */
+fab.onclick = addNote;
+let toastT;
+function toast(msg){
+  const el = $('#toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(()=>el.classList.remove('show'), 1400);
+}
+
+// 雙擊空白處也能新增
+wall.addEventListener('dblclick', e=>{
+  if (e.target === wall || e.target === emptyHint || e.target.closest('#empty')) addNote();
+});
+
+/* ── Service Worker ────────────────── */
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', ()=> navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
