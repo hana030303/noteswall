@@ -63,6 +63,8 @@ header{position:sticky;top:12px;z-index:30;margin-bottom:22px}
 .toolbtn{padding:9px 12px;border-radius:var(--r-sm);background:rgba(255,255,255,.55);border:1px solid var(--border-2);
   color:var(--muted);font-size:12px;transition:.2s}
 .toolbtn:hover{color:var(--ink);border-color:var(--accent);background:#fff}
+.navtoggle{display:none;width:40px;height:40px;border-radius:11px;background:rgba(255,255,255,.55);border:1px solid var(--border-2);color:var(--ink);font-size:18px;place-items:center;transition:.2s}
+.navtoggle:hover{border-color:var(--accent);background:#fff}
 .status{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);background:rgba(255,255,255,.6);border:1px solid var(--border-2);padding:8px 11px;border-radius:999px;white-space:nowrap}
 .status .led{width:7px;height:7px;border-radius:50%;background:var(--dim);flex:none;transition:background .3s}
 .status.on .led{background:#22a06b;box-shadow:0 0 0 3px rgba(34,160,107,.18)}
@@ -287,9 +289,21 @@ table.hist td[data-edit]:hover{background:var(--accent-soft)}
   .recform{grid-template-columns:repeat(2,1fr)}
   .recform .field.wide{grid-column:span 2}
   .contacts-out{grid-template-columns:1fr}
-  .nav{flex-direction:column;align-items:stretch}
-  .tabs{margin-left:0;justify-content:center}
-  .logo{justify-content:center}
+  /* 手機版：頁籤收進漢堡選單 */
+  .navtoggle{display:grid}
+  .nav{flex-wrap:wrap;align-items:center;row-gap:10px}
+  .logo{order:1;margin-right:auto}
+  #syncStatus{order:2}
+  .navtoggle{order:3}
+  .tabs{order:4;width:100%;margin-left:0}
+  #btnExport{order:5}#btnImport{order:6}#btnLock{order:7}
+  .nav:not(.open) .tabs,
+  .nav:not(.open) #btnExport,
+  .nav:not(.open) #btnImport,
+  .nav:not(.open) #btnLock{display:none}
+  .nav.open .tabs{display:flex;flex-direction:column;gap:6px;padding-top:4px;border-top:1px solid var(--border-2)}
+  .nav.open .tab{width:100%;justify-content:flex-start}
+  .nav.open .toolbtn{flex:1;text-align:center}
 }
 </style>
 </head>
@@ -315,6 +329,7 @@ table.hist td[data-edit]:hover{background:var(--accent-soft)}
         <span class="mark display">W</span>
         <span>雲端工作站<small>WORKSTATION · 毛玻璃工作台</small></span>
       </div>
+      <button class="navtoggle" id="navToggle" aria-label="選單" aria-expanded="false">☰</button>
       <nav class="tabs" id="tabs">
         <button class="tab active" data-tab="main"><span class="em">🗂️</span>主工作區</button>
         <button class="tab" data-tab="social"><span class="em">📊</span>社群進稿</button>
@@ -533,12 +548,19 @@ const fCAT  = () => $('#f_combo').value.split('|')[1];
 const fLabel= () => { const c=COMBOS.find(x=>x.v===$('#f_combo').value); return c?c.label:''; };
 
 /* ════════ TABS ════════ */
+const navEl = $('.nav');
+$('#navToggle').addEventListener('click',()=>{
+  const open=navEl.classList.toggle('open');
+  $('#navToggle').setAttribute('aria-expanded',open?'true':'false');
+  $('#navToggle').textContent=open?'✕':'☰';
+});
 $('#tabs').addEventListener('click',e=>{
   const b=e.target.closest('.tab'); if(!b) return;
   $$('.tab').forEach(t=>t.classList.toggle('active',t===b));
   const tab=b.dataset.tab;
   ['main','social','sop'].forEach(v=>$('#view-'+v).classList.toggle('hidden',v!==tab));
   store.set('ui_tab',tab);
+  navEl.classList.remove('open'); $('#navToggle').setAttribute('aria-expanded','false'); $('#navToggle').textContent='☰';  // 選完自動收合
 });
 $$('.subtab').forEach(s=>s.addEventListener('click',()=>{
   $$('.subtab').forEach(x=>x.classList.toggle('active',x===s));
