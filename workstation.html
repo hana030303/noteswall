@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雲端工作站 · Workstation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --glass:rgba(255,255,255,.55); --glass-2:rgba(255,255,255,.72); --glass-strong:rgba(255,255,255,.85);
+  --border:rgba(255,255,255,.7); --border-2:rgba(150,160,190,.28);
+  --ink:#2a2e3a; --muted:#6b7186; --dim:#9aa0b4;
+  --accent:#5b7cfa; --accent-2:#3a5bd9; --accent-soft:rgba(91,124,250,.14);
+  --ok:#22a06b; --warn:#e0a020; --danger:#e5484d;
+  --shadow:0 8px 32px -8px rgba(60,70,120,.25); --shadow-sm:0 2px 10px -4px rgba(60,70,120,.2);
+  --r-xl:24px; --r-lg:18px; --r-md:13px; --r-sm:9px;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Noto Sans TC',system-ui,sans-serif;color:var(--ink);min-height:100vh;
+  font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;
+  background:linear-gradient(120deg,#eef2ff 0%,#f7f0fb 40%,#eafaf5 100%);
+  overflow-x:hidden;
+}
+/* soft background blobs */
+.blob{position:fixed;border-radius:50%;filter:blur(60px);opacity:.5;z-index:0;pointer-events:none}
+.blob.a{width:44vw;height:44vw;background:#bcd0ff;top:-12vw;left:-8vw;animation:float1 18s var(--ease) infinite alternate}
+.blob.b{width:38vw;height:38vw;background:#ffcdf0;bottom:-14vw;right:-6vw;animation:float2 20s var(--ease) infinite alternate}
+.blob.c{width:30vw;height:30vw;background:#c4f5e2;top:40%;left:55%;animation:float1 24s var(--ease) infinite alternate}
+@keyframes float1{to{transform:translate(4vw,5vw) scale(1.08)}}
+@keyframes float2{to{transform:translate(-5vw,-4vw) scale(1.1)}}
+.display{font-family:'Space Grotesk','Noto Sans TC',sans-serif}
+button{font-family:inherit;color:inherit;border:none;background:none;cursor:pointer}
+input,select,textarea{font-family:inherit;color:inherit;font-size:14px}
+.hidden{display:none!important}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:rgba(120,130,170,.35);border-radius:20px;border:3px solid transparent;background-clip:padding-box}
+
+/* glass utility */
+.glass{background:var(--glass);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);
+  border:1px solid var(--border);box-shadow:var(--shadow);border-radius:var(--r-lg)}
+
+/* layout */
+.wrap{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:22px 18px 80px}
+
+/* header / navbar */
+header{position:sticky;top:12px;z-index:30;margin-bottom:22px}
+.nav{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:var(--r-xl)}
+.logo{display:flex;align-items:center;gap:11px;font-weight:700;font-size:16px;white-space:nowrap}
+.logo .mark{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--accent),#7d5bd9);
+  display:grid;place-items:center;color:#fff;font-family:'Space Grotesk';box-shadow:0 6px 16px rgba(91,124,250,.4)}
+.logo small{display:block;font-weight:400;font-size:10.5px;color:var(--muted);letter-spacing:1px}
+.tabs{display:flex;gap:5px;margin-left:auto;flex-wrap:wrap}
+.tab{display:flex;align-items:center;gap:7px;padding:10px 16px;border-radius:var(--r-md);color:var(--muted);
+  font-weight:500;font-size:13.5px;transition:all .25s var(--ease);white-space:nowrap}
+.tab:hover{background:rgba(255,255,255,.5);color:var(--ink)}
+.tab.active{background:var(--ink);color:#fff;box-shadow:var(--shadow-sm)}
+.tab .em{font-size:15px}
+.toolbtn{padding:9px 12px;border-radius:var(--r-sm);background:rgba(255,255,255,.55);border:1px solid var(--border-2);
+  color:var(--muted);font-size:12px;transition:.2s}
+.toolbtn:hover{color:var(--ink);border-color:var(--accent);background:#fff}
+.status{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);background:rgba(255,255,255,.6);border:1px solid var(--border-2);padding:8px 11px;border-radius:999px;white-space:nowrap}
+.status .led{width:7px;height:7px;border-radius:50%;background:var(--dim);flex:none;transition:background .3s}
+.status.on .led{background:#22a06b;box-shadow:0 0 0 3px rgba(34,160,107,.18)}
+.status.local .led{background:#e0a020;box-shadow:0 0 0 3px rgba(224,160,32,.18)}
+.status.err .led{background:var(--danger);box-shadow:0 0 0 3px rgba(229,72,77,.18)}
+
+/* generic controls */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 16px;border-radius:var(--r-sm);font-weight:600;font-size:13px;
+  background:var(--accent);color:#fff;box-shadow:0 4px 14px rgba(91,124,250,.35);transition:transform .2s var(--ease),box-shadow .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn.ghost{background:rgba(255,255,255,.6);color:var(--ink);border:1px solid var(--border-2);box-shadow:none}
+.btn.ghost:hover{border-color:var(--accent);color:var(--accent-2)}
+.btn.sm{padding:7px 12px;font-size:12px}
+.btn.danger{background:var(--danger);box-shadow:0 4px 14px rgba(229,72,77,.3)}
+.field label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px;font-weight:500}
+.inp,select.inp,textarea.inp{width:100%;padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--border-2);
+  background:rgba(255,255,255,.7);transition:.2s;outline:none}
+.inp:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
+textarea.inp{resize:vertical;min-height:80px;line-height:1.6}
+.panel{padding:22px}
+.section-title{font-family:'Space Grotesk';font-size:18px;font-weight:700;display:flex;align-items:center;gap:9px;margin-bottom:4px}
+.section-sub{color:var(--muted);font-size:12.5px;margin-bottom:18px}
+
+.view{animation:fade .4s var(--ease)}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* sub tabs */
+.subtabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+.subtab{padding:9px 15px;border-radius:var(--r-sm);font-size:13px;font-weight:500;color:var(--muted);
+  background:rgba(255,255,255,.45);border:1px solid transparent;transition:.2s}
+.subtab.active{background:#fff;color:var(--accent-2);border-color:var(--border-2);box-shadow:var(--shadow-sm)}
+
+/* ── STICKY NOTES ── */
+#noteWall{position:relative;height:min(66vh,620px);border-radius:var(--r-lg);overflow:hidden;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.14),rgba(255,255,255,.14) 2px,transparent 2px,transparent 24px),rgba(255,255,255,.25);
+  border:1px dashed var(--border-2)}
+.note{position:absolute;width:190px;min-height:140px;padding:14px 13px 32px;border-radius:6px;cursor:grab;
+  box-shadow:0 6px 18px -6px rgba(40,40,70,.35);display:flex;flex-direction:column;will-change:transform;
+  transition:box-shadow .2s var(--ease)}
+.note.drag{cursor:grabbing;box-shadow:0 18px 40px -10px rgba(40,40,70,.5);z-index:50!important}
+.note .ntext{flex:1;font-size:14px;line-height:1.5;color:rgba(0,0,0,.8);outline:none;white-space:pre-wrap;word-break:break-word;min-height:60px}
+.note .ntext:empty::before{content:'寫點什麼…';color:rgba(0,0,0,.3)}
+.note .nfoot{position:absolute;left:11px;right:10px;bottom:8px;display:flex;align-items:center;gap:5px;opacity:0;transition:.2s}
+.note:hover .nfoot{opacity:1}
+.sw{width:15px;height:15px;border-radius:50%;border:1.5px solid rgba(0,0,0,.15);cursor:pointer;transition:transform .15s}
+.sw:hover{transform:scale(1.2)}
+.sw.on{box-shadow:0 0 0 2px rgba(0,0,0,.4)}
+.note .ndel{margin-left:auto;font-size:13px;color:rgba(0,0,0,.35);width:20px;height:20px;border-radius:5px;display:grid;place-items:center}
+.note .ndel:hover{background:rgba(0,0,0,.1)}
+
+/* ── WEEKLY ── */
+.weekhead{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.weekgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
+.daycol{background:rgba(255,255,255,.5);border:1px solid var(--border-2);border-radius:var(--r-md);padding:12px 9px;min-height:180px;display:flex;flex-direction:column;min-width:0}
+.daycol.today{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.dayhd{text-align:center;margin-bottom:10px}
+.dayhd .wd{font-weight:700;font-size:13px}
+.dayhd .dt{font-size:11px;color:var(--muted)}
+.daycol.today .wd{color:var(--accent-2)}
+.tasklist{flex:1;display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.task{display:flex;align-items:flex-start;gap:7px;font-size:12.5px;background:#fff;border:1px solid var(--border-2);border-radius:7px;padding:7px 8px;group}
+.task input{margin-top:2px;accent-color:var(--accent);cursor:pointer}
+.task .tt{flex:1;min-width:0;word-break:break-word;overflow-wrap:anywhere;line-height:1.4}
+.task.done .tt{text-decoration:line-through;color:var(--dim)}
+.task .x{color:var(--dim);opacity:0;transition:.2s;font-size:12px}
+.task:hover .x{opacity:1}
+.addtask{display:flex;gap:4px}
+.addtask input{flex:1;min-width:0;width:100%;padding:6px 8px;font-size:12px;border:1px solid var(--border-2);border-radius:6px;background:rgba(255,255,255,.7);outline:none}
+.addtask input:focus{border-color:var(--accent)}
+.addtask button{padding:0 10px;border-radius:6px;background:var(--accent-soft);color:var(--accent-2);font-weight:700}
+
+/* ── CONTACTS ── */
+.contactbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.contactbar .search{flex:1;min-width:200px}
+.cardgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.ccard{padding:16px;border-radius:var(--r-md);background:var(--glass-2);border:1px solid var(--border);box-shadow:var(--shadow-sm);position:relative;transition:transform .2s var(--ease)}
+.ccard:hover{transform:translateY(-3px)}
+.ccard .dept{display:inline-block;font-size:10.5px;color:var(--accent-2);background:var(--accent-soft);padding:2px 9px;border-radius:20px;margin-bottom:9px;font-weight:600}
+.ccard .cname{font-weight:700;font-size:16px;margin-bottom:6px}
+.ccard .crow{font-size:12.5px;color:var(--muted);display:flex;gap:6px;margin-bottom:3px}
+.ccard .crow b{color:var(--ink);font-weight:500}
+.ccard .cbtns{display:flex;gap:6px;margin-top:11px}
+.ccard .cbtns button{flex:1;padding:6px;font-size:11.5px;border-radius:6px;background:rgba(255,255,255,.6);border:1px solid var(--border-2);color:var(--muted)}
+.ccard .cbtns button:hover{color:var(--accent-2);border-color:var(--accent)}
+
+/* ── DASHBOARD ── */
+.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.stat{padding:15px;border-radius:var(--r-md);background:var(--glass-2);border:1px solid var(--border);box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.stat::after{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--accent);opacity:.55}
+.stat .sname{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.stat .snums{display:flex;align-items:baseline;gap:10px}
+.stat .sweek{font-family:'Space Grotesk';font-size:26px;font-weight:700;line-height:1}
+.stat .sq{font-size:12px;color:var(--muted)}
+.stat .sq b{font-family:'Space Grotesk';color:var(--ink);font-size:15px}
+.stat.status .badges{display:flex;flex-direction:column;gap:5px;margin-top:2px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500}
+.led{width:9px;height:9px;border-radius:50%;background:var(--dim);flex:none}
+.led.on{background:var(--ok);box-shadow:0 0 0 3px rgba(34,160,107,.18)}
+.led.alert{background:var(--danger);box-shadow:0 0 0 3px rgba(229,72,77,.2);animation:pulse 1.4s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(229,72,77,0)}}
+.stat.alert::after{background:var(--danger);opacity:1}
+
+/* add record form */
+.recform{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.recform .field.wide{grid-column:span 2}
+.reason-field{background:rgba(240,205,60,.14);border:1px solid rgba(224,160,32,.35);padding:10px;border-radius:var(--r-sm)}
+.reason-field label{color:#9a7510}
+.formfoot{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:4px}
+.chk{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);padding:10px 0}
+.chk input{width:17px;height:17px;accent-color:var(--accent)}
+
+/* history table */
+.tablewrap{overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border-2);margin-top:8px}
+table.hist{width:100%;border-collapse:collapse;font-size:12.5px;background:rgba(255,255,255,.5);min-width:820px}
+table.hist th{background:rgba(255,255,255,.7);padding:11px 12px;text-align:left;font-weight:600;color:var(--muted);font-size:11.5px;position:sticky;top:0;border-bottom:1px solid var(--border-2)}
+table.hist td{padding:10px 12px;border-bottom:1px solid rgba(150,160,190,.15);vertical-align:top}
+table.hist tr:hover td{background:rgba(255,255,255,.5)}
+table.hist td[data-edit]{cursor:cell}
+table.hist td[data-edit]:hover{background:var(--accent-soft)}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.pf-Line{background:#e3f7ec;color:#1c8a5a}.pf-FB{background:#e5edff;color:#2c50c8}.pf-IG{background:#fde6f3;color:#c62a86}
+.pf-YT{background:#ffe6e6;color:#d13636}.pf-Threads{background:#ececf5;color:#4a4a66}
+.rowdel{color:var(--dim);cursor:pointer}.rowdel:hover{color:var(--danger)}
+.editing-cell{padding:4px!important}
+.editing-cell input,.editing-cell select{width:100%;padding:5px 6px;border:1px solid var(--accent);border-radius:5px;outline:none;font-size:12.5px;background:#fff}
+
+/* ── MODAL ── */
+.modal-mask{position:fixed;inset:0;z-index:100;background:rgba(40,44,60,.4);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;padding:18px;opacity:0;pointer-events:none;transition:opacity .3s}
+.modal-mask.show{opacity:1;pointer-events:auto}
+.modal{width:min(680px,96vw);max-height:92vh;overflow-y:auto;border-radius:var(--r-lg);padding:24px;
+  transform:translateY(16px) scale(.98);transition:transform .3s var(--ease);background:var(--glass-strong);
+  backdrop-filter:blur(24px) saturate(170%);border:1px solid var(--border);box-shadow:0 30px 70px -20px rgba(40,44,80,.5)}
+.modal-mask.show .modal{transform:none}
+.modal h3{font-family:'Space Grotesk';font-size:18px;margin-bottom:4px}
+.modal .close{position:absolute}
+.preview-str{background:var(--ink);color:#eef;padding:12px 14px;border-radius:var(--r-sm);font-family:'Space Grotesk',monospace;
+  font-size:13px;margin:14px 0;word-break:break-all;line-height:1.6;display:flex;gap:10px;align-items:center;justify-content:space-between}
+.preview-str button{background:rgba(255,255,255,.15);color:#fff;padding:5px 10px;border-radius:6px;font-size:11px;flex:none}
+.contacts-out{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cbox{background:rgba(255,255,255,.6);border:1px solid var(--border-2);border-radius:var(--r-sm);padding:12px}
+.cbox h4{font-size:12px;color:var(--muted);margin-bottom:9px;display:flex;justify-content:space-between;align-items:center}
+.cbox h4 button{font-size:10.5px;color:var(--accent-2);background:var(--accent-soft);padding:3px 8px;border-radius:5px}
+.crow2{display:flex;align-items:center;gap:6px;font-size:12px;padding:5px 0;border-bottom:1px dashed rgba(150,160,190,.25)}
+.crow2:last-child{border:none}
+.crow2 span{flex:1;word-break:break-all}
+.crow2 button{font-size:10.5px;color:var(--muted);border:1px solid var(--border-2);padding:2px 7px;border-radius:5px;flex:none}
+.crow2 button:hover{color:var(--accent-2);border-color:var(--accent)}
+
+/* ── SOP ── */
+.soplayout{display:grid;grid-template-columns:270px 1fr;gap:16px;min-height:520px}
+.soplist{padding:14px;display:flex;flex-direction:column;gap:10px}
+.sopsearch{width:100%;padding:9px 11px;border-radius:var(--r-sm);border:1px solid var(--border-2);background:rgba(255,255,255,.7);outline:none}
+.catchips{display:flex;flex-wrap:wrap;gap:5px}
+.catchip{font-size:11px;padding:4px 10px;border-radius:20px;background:rgba(255,255,255,.6);border:1px solid var(--border-2);color:var(--muted);cursor:pointer}
+.catchip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.sopitems{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:7px;max-height:440px}
+.sopitem{padding:11px 12px;border-radius:var(--r-sm);background:rgba(255,255,255,.55);border:1px solid var(--border-2);cursor:pointer;transition:.2s}
+.sopitem:hover{border-color:var(--accent)}
+.sopitem.active{background:#fff;border-color:var(--accent);box-shadow:var(--shadow-sm)}
+.sopitem .st{font-weight:600;font-size:13.5px;margin-bottom:4px}
+.sopitem .sc{display:flex;gap:4px;flex-wrap:wrap}
+.sopitem .sc span{font-size:10px;color:var(--accent-2);background:var(--accent-soft);padding:1px 7px;border-radius:10px}
+.sopmain{padding:22px;display:flex;flex-direction:column}
+.sopmain .empty{margin:auto;color:var(--dim);text-align:center}
+.sophead{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.sophead h2{font-size:22px;flex:1}
+.reader{line-height:1.75;font-size:14.5px}
+.reader h1{font-size:24px;margin:16px 0 10px}.reader h2{font-size:20px;margin:14px 0 8px}.reader h3{font-size:17px;margin:12px 0 6px}
+.reader p{margin:9px 0}.reader ul,.reader ol{margin:9px 0 9px 22px}.reader li{margin:3px 0}
+.reader code{background:rgba(120,130,170,.14);padding:1px 6px;border-radius:5px;font-size:.9em}
+.reader pre{background:rgba(40,44,60,.9);color:#eef;padding:12px 14px;border-radius:var(--r-sm);overflow-x:auto;margin:10px 0}
+.reader pre code{background:none;color:inherit}
+.reader a{color:var(--accent-2);text-decoration:underline}
+.reader img{max-width:100%;border-radius:var(--r-sm);margin:10px 0}
+.reader blockquote{border-left:3px solid var(--accent);padding-left:12px;color:var(--muted);margin:10px 0}
+.tageditor{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}
+.tagpill{font-size:11.5px;background:var(--accent-soft);color:var(--accent-2);padding:3px 6px 3px 10px;border-radius:20px;display:flex;align-items:center;gap:5px}
+.tagpill button{color:var(--accent-2);font-weight:700}
+.dropzone{border:2px dashed var(--border-2);border-radius:var(--r-md);padding:20px;text-align:center;color:var(--muted);
+  font-size:13px;transition:.2s;background:rgba(255,255,255,.4);margin-top:10px}
+.dropzone.over{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-2)}
+.attachzone{margin-top:14px;padding-top:14px;border-top:1px solid var(--border-2)}
+.attachzone h4{font-size:12px;color:var(--muted);margin-bottom:10px}
+.attgrid{display:flex;flex-wrap:wrap;gap:10px}
+.att{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:var(--r-sm);background:rgba(255,255,255,.6);border:1px solid var(--border-2);font-size:12.5px}
+.att .ico{font-size:18px}
+.att .aname{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.att a{color:var(--accent-2)}
+.att .adel{color:var(--dim);cursor:pointer}.att .adel:hover{color:var(--danger)}
+.imgprev{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.imgprev .ip{position:relative;width:84px;height:84px;border-radius:8px;overflow:hidden;border:1px solid var(--border-2)}
+.imgprev .ip img{width:100%;height:100%;object-fit:cover}
+.imgprev .ip button{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.55);color:#fff;width:18px;height:18px;border-radius:50%;font-size:11px;line-height:1}
+
+/* gate */
+#gate{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:linear-gradient(120deg,#eef2ff 0%,#f7f0fb 40%,#eafaf5 100%);transition:opacity .5s var(--ease),transform .5s var(--ease)}
+#gate.out{opacity:0;transform:scale(1.03);pointer-events:none}
+.gate-card{width:min(360px,92vw);padding:34px 28px;text-align:center}
+.gate-kicker{font-size:11px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:14px}
+.gate-title{font-size:30px;font-weight:700;letter-spacing:-1px;margin-bottom:6px}
+.gate-sub{color:var(--muted);font-size:13px;margin-bottom:26px}
+#gateInput{width:100%;padding:13px 14px;border-radius:var(--r-sm);border:1px solid var(--border-2);background:rgba(255,255,255,.75);
+  font-size:18px;letter-spacing:6px;text-align:center;outline:none;margin-bottom:16px}
+#gateInput::placeholder{letter-spacing:2px;font-size:14px;color:var(--dim)}
+#gateInput:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.gate-err{color:var(--danger);font-size:12px;height:16px;margin-top:12px;opacity:0;transition:opacity .3s}
+.shake{animation:shake .4s var(--ease)}
+@keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(3px)}30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);z-index:200;
+  background:var(--ink);color:#fff;padding:11px 20px;border-radius:30px;font-size:13px;font-weight:500;
+  box-shadow:0 12px 30px -8px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:.3s var(--ease)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:820px){
+  .soplayout{grid-template-columns:1fr}
+  .weekgrid{grid-template-columns:1fr;gap:8px}
+  .statgrid{grid-template-columns:repeat(2,1fr)}
+  .recform{grid-template-columns:repeat(2,1fr)}
+  .recform .field.wide{grid-column:span 2}
+  .contacts-out{grid-template-columns:1fr}
+  .nav{flex-direction:column;align-items:stretch}
+  .tabs{margin-left:0;justify-content:center}
+  .logo{justify-content:center}
+}
+</style>
+</head>
+<body>
+<div class="blob a"></div><div class="blob b"></div><div class="blob c"></div>
+
+<!-- ══ 進入密碼 ══ -->
+<div id="gate">
+  <div class="gate-card glass">
+    <div class="gate-kicker">WORKSTATION</div>
+    <div class="gate-title display">雲端工作站</div>
+    <div class="gate-sub">請輸入密碼進入</div>
+    <input id="gateInput" type="password" inputmode="numeric" placeholder="密碼" autocomplete="off" spellcheck="false">
+    <button class="btn" id="gateBtn" style="width:100%;justify-content:center">進入</button>
+    <div class="gate-err" id="gateErr">密碼不正確</div>
+  </div>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="nav glass">
+      <div class="logo">
+        <span class="mark display">W</span>
+        <span>雲端工作站<small>WORKSTATION · 毛玻璃工作台</small></span>
+      </div>
+      <nav class="tabs" id="tabs">
+        <button class="tab active" data-tab="main"><span class="em">🗂️</span>主工作區</button>
+        <button class="tab" data-tab="social"><span class="em">📊</span>社群進稿</button>
+        <button class="tab" data-tab="sop"><span class="em">📚</span>SOP 知識庫</button>
+      </nav>
+      <div class="status local" id="syncStatus"><span class="led"></span><span id="syncTxt">連線中…</span></div>
+      <button class="toolbtn" id="btnExport" title="匯出備份">⬇︎ 備份</button>
+      <button class="toolbtn" id="btnImport" title="匯入備份">⬆︎ 還原</button>
+      <button class="toolbtn" id="btnLock" title="鎖定">🔒</button>
+      <input type="file" id="importFile" accept="application/json" class="hidden">
+    </div>
+  </header>
+
+  <!-- ══ MAIN ══ -->
+  <section id="view-main" class="view">
+    <div class="subtabs">
+      <button class="subtab active" data-sub="notes">📌 便利貼</button>
+      <button class="subtab" data-sub="weekly">🗓️ 當週工作</button>
+      <button class="subtab" data-sub="contacts">👥 聯絡人</button>
+    </div>
+
+    <!-- notes -->
+    <div id="sub-notes" class="glass panel">
+      <div class="section-title">📌 便利貼</div>
+      <div class="section-sub">自由新增、編輯、換色、拖曳擺放。資料自動存到這台裝置。</div>
+      <div style="margin-bottom:14px"><button class="btn" id="addNote">＋ 新增便利貼</button></div>
+      <div id="noteWall"></div>
+    </div>
+
+    <!-- weekly -->
+    <div id="sub-weekly" class="glass panel hidden">
+      <div class="section-title">🗓️ 當週工作</div>
+      <div class="section-sub">週一至週日，勾選即完成（劃線）。可自由新增／刪除任務。</div>
+      <div class="weekhead">
+        <button class="btn ghost sm" id="prevWeek">← 上一週</button>
+        <div id="weekLabel" class="display" style="font-weight:600"></div>
+        <button class="btn ghost sm" id="nextWeek">下一週 →</button>
+        <button class="btn ghost sm" id="thisWeek">回本週</button>
+      </div>
+      <div class="weekgrid" id="weekGrid"></div>
+    </div>
+
+    <!-- contacts -->
+    <div id="sub-contacts" class="glass panel hidden">
+      <div class="section-title">👥 聯絡人</div>
+      <div class="section-sub">卡片式通訊錄，即時搜尋、一鍵複製。</div>
+      <div class="contactbar">
+        <input class="inp search" id="contactSearch" placeholder="🔍 搜尋部門 / 姓名 / 分機 / Email…">
+        <button class="btn" id="addContact">＋ 新增聯絡人</button>
+      </div>
+      <div class="cardgrid" id="contactGrid"></div>
+    </div>
+  </section>
+
+  <!-- ══ SOCIAL ══ -->
+  <section id="view-social" class="view hidden">
+    <div class="glass panel">
+      <div class="section-title">📊 社群進稿紀錄系統</div>
+      <div class="section-sub">看板數據由下方歷史紀錄即時計算（週：週一~週日／季：Q1-Q4）。</div>
+      <div class="statgrid" id="statGrid"></div>
+    </div>
+
+    <div class="glass panel" style="margin-top:16px">
+      <div class="section-title" style="font-size:15px">📝 新增紀錄</div>
+      <div class="section-sub">依平台自動連動欄位；下方即時產生格式字串，選粉絲團即帶出收件者／副本名單。</div>
+      <div class="recform">
+        <div class="field"><label>1. 類別（平台＋類別）</label>
+          <select class="inp" id="f_combo"></select></div>
+        <div class="field"><label>2. 進稿日期</label>
+          <input class="inp" type="date" id="f_inDate"></div>
+        <div class="field"><label>3. 上稿日期</label>
+          <input class="inp" type="date" id="f_upDate"></div>
+        <div class="field wide"><label>4. 活動名稱</label>
+          <input class="inp" id="f_activity" placeholder="活動 / 稿件名稱"></div>
+        <div class="field"><label>5. 則數</label>
+          <input class="inp" type="number" id="f_count" value="1" min="1"></div>
+        <div class="field hidden" id="wrap_type"><label>6. 類型</label>
+          <select class="inp" id="f_type"></select></div>
+        <div class="field" id="wrap_fanpage"><label>7. 粉絲團</label>
+          <select class="inp" id="f_fanpage"></select></div>
+        <div class="field" id="wrap_nth"><label>第 X 則（聯合新聞網）</label>
+          <input class="inp" id="f_nth" placeholder="例：3"></div>
+        <div class="field" id="wrap_shot"><label>8. 上刊截圖</label>
+          <label class="chk"><input type="checkbox" id="f_shot"> 已附上刊截圖</label></div>
+      </div>
+      <div class="field reason-field hidden" id="wrap_reason">
+        <label>9. 原因說明 / 備註</label>
+        <input class="inp" id="f_reason" placeholder="Line 異常 / 其他，請說明原因（FB 進稿此欄作為備註，整合進歷史）" style="background:rgba(255,255,255,.8)">
+      </div>
+      <div class="formfoot">
+        <button class="btn" id="archiveRec">📥 歸檔紀錄</button>
+        <span id="cascadeHint" style="font-size:12px;color:var(--muted)"></span>
+      </div>
+      <!-- 直接帶入：格式字串（任何平台皆顯示）+ 通訊名單（選粉絲團才出） -->
+      <div class="preview-str" style="margin-top:14px"><span id="f_preview"></span><button id="copyPreview">複製格式</button></div>
+      <div class="contacts-out hidden" id="f_contacts"></div>
+    </div>
+
+    <div class="glass panel" style="margin-top:16px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div>
+          <div class="section-title" style="font-size:15px">🗃️ 歷史紀錄</div>
+          <div class="section-sub" style="margin-bottom:0">新資料自動置頂 · 雙擊任一格可直接修改，統計即時重算。</div>
+        </div>
+        <button class="btn danger sm" id="clearRecords" style="margin-left:auto">🗑 清除紀錄</button>
+      </div>
+      <div class="tablewrap" style="margin-top:14px">
+        <table class="hist">
+          <thead><tr>
+            <th>平台</th><th>類別</th><th>進稿日期</th><th>上稿日期</th><th>活動名稱</th><th>截圖</th><th>原因說明</th><th></th>
+          </tr></thead>
+          <tbody id="histBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ SOP ══ -->
+  <section id="view-sop" class="view hidden">
+    <div class="soplayout">
+      <div class="soplist glass">
+        <button class="btn" id="newSop">＋ 新增 SOP</button>
+        <input class="sopsearch" id="sopSearch" placeholder="🔍 搜尋標題 / 內文…">
+        <div class="catchips" id="catChips"></div>
+        <div class="sopitems" id="sopItems"></div>
+      </div>
+      <div class="sopmain glass" id="sopMain">
+        <div class="empty">
+          <div style="font-size:40px;margin-bottom:8px">📚</div>
+          <div>從左側選一篇 SOP，或按「＋ 新增 SOP」</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   雲端工作站 — 單檔前端，資料存 LocalStorage
+   （儲存層走 store.get/set，日後要接雲端只換這一層即可）
+   ══════════════════════════════════════════════════════════════ */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => 'x'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3);
+const todayISO = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+
+/* 進入密碼（想改成別的，改這一行即可） */
+const PASSCODE = '19980303';
+
+/* ── 雲端設定（與便利貼牆同一個 Firebase 專案，路徑不同不會打架）──
+   同一組設定＋同一個 WORKSPACE_ID ＝共用同一份雲端資料。留 PASTE_HERE 則走純本機。 */
+const firebaseConfig = {
+  apiKey: "AIzaSyBbgYS1ALqYm9WQ0CwpU4g6aPVYY3K0qYc",
+  authDomain: "work-e04df.firebaseapp.com",
+  projectId: "work-e04df",
+  appId: "1:970046892491:web:9d5e5a0a14508a3f376e4e"
+};
+const WORKSPACE_ID = 'main';
+const CLOUD_KEYS = ['notes','tasks','contacts','records','sops','sopcats','fanpages'];  // 需雲端同步的資料
+let cloud = null;               // 雲端連線 handle；null＝本機模式
+const writeTimers = {};
+
+const store = {
+  get(k,def){ try{ const v=localStorage.getItem('ws2_'+k); return v==null?def:JSON.parse(v);}catch(e){return def;} },
+  set(k,v){
+    try{ localStorage.setItem('ws2_'+k, JSON.stringify(v)); }catch(e){ toast('⚠️ 本機儲存空間可能已滿'); }
+    if(cloud && CLOUD_KEYS.includes(k)) cloud.write(k,v);   // 有雲端就同步上去（debounce）
+  }
+};
+
+let toastT;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1600); }
+async function copy(text){ try{ await navigator.clipboard.writeText(text); toast('已複製 ✓'); }
+  catch(e){ const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('已複製 ✓'); } }
+
+/* ── 通訊名單字典（三階連動）── */
+// 粉絲團清單（保留名稱，聯絡人預設留空；實際名單由使用者在各粉絲團底下「＋新增」，存進雲端、不寫進公開檔案）
+const DEFAULT_FANPAGES = {
+  '聯合報':{to:[],cc:[]},
+  'udn.com聯合新聞網':{to:[],cc:[]},
+  '元氣網':{to:[],cc:[]},
+  '遊戲角落':{to:[],cc:[]},
+  '橘世代':{to:[],cc:[]},
+  '倡議家':{to:[],cc:[]},
+  'udn瘋運動':{to:[],cc:[]},
+  '報時光':{to:[],cc:[]},
+  '噓星聞':{to:[],cc:[]},
+  '時尚/走跳世界':{to:[],cc:[]},
+  '發燒車訊':{to:[],cc:[]},
+  '女子漾':{to:[],cc:[]},
+  '寵物部落':{to:[],cc:[]}
+};
+const FANPAGES = Object.keys(DEFAULT_FANPAGES);
+let fanpages = store.get('fanpages', null);
+if(!fanpages){ fanpages = JSON.parse(JSON.stringify(DEFAULT_FANPAGES)); store.set('fanpages', fanpages); }
+function saveFanpages(){ store.set('fanpages', fanpages); }
+const UNI_NEWS = 'udn.com聯合新聞網';          // 「聯合新聞網」對應鍵
+const fanpageLabel = k => k===UNI_NEWS ? '聯合新聞網' : k;
+const emailOnly = s => { const m=String(s).match(/[\w.\-]+@[\w.\-]+/); return m?m[0]:s; };
+
+const PLATFORMS = ['Line','FB','IG','YT','Threads'];
+const CATEGORIES = { Line:['進稿','異常','其他'], FB:['進稿','導言'], IG:['限動','貼文'], YT:['進稿'], Threads:['進稿'] };
+const TYPES = ['廣編導流','影音貼文','圖卡貼文'];
+// 平台＋類別 合併成單一「類別」下拉；value 內部仍拆成 pf|cat 給統計/格式字串用
+const COMBOS = [
+  {v:'FB|進稿',label:'FB進稿'}, {v:'FB|導言',label:'FB導言'},
+  {v:'IG|限動',label:'IG限動'}, {v:'IG|貼文',label:'IG貼文'},
+  {v:'YT|進稿',label:'YT進稿'}, {v:'Threads|進稿',label:'Threads進稿'},
+  {v:'Line|進稿',label:'LINE進稿'}, {v:'Line|異常',label:'LINE異常'}, {v:'Line|其他',label:'LINE其他'}
+];
+const fPF   = () => $('#f_combo').value.split('|')[0];
+const fCAT  = () => $('#f_combo').value.split('|')[1];
+const fLabel= () => { const c=COMBOS.find(x=>x.v===$('#f_combo').value); return c?c.label:''; };
+
+/* ════════ TABS ════════ */
+$('#tabs').addEventListener('click',e=>{
+  const b=e.target.closest('.tab'); if(!b) return;
+  $$('.tab').forEach(t=>t.classList.toggle('active',t===b));
+  const tab=b.dataset.tab;
+  ['main','social','sop'].forEach(v=>$('#view-'+v).classList.toggle('hidden',v!==tab));
+  store.set('ui_tab',tab);
+});
+$$('.subtab').forEach(s=>s.addEventListener('click',()=>{
+  $$('.subtab').forEach(x=>x.classList.toggle('active',x===s));
+  ['notes','weekly','contacts'].forEach(v=>$('#sub-'+v).classList.toggle('hidden',v!==s.dataset.sub));
+  if(s.dataset.sub==='weekly') renderWeek();
+}));
+
+/* ════════ 1) STICKY NOTES ════════ */
+const NOTE_COLORS = ['#ffe08a','#ff9d8a','#9ad0c2','#a7c7ff','#e7b6ff','#f6f2e9'];
+let notes = store.get('notes',[]);
+let topZ = Math.max(1,...notes.map(n=>n.z||1));
+const wallEl = $('#noteWall');
+
+function saveNotes(){ store.set('notes',notes); }
+function renderNotes(){
+  wallEl.innerHTML='';
+  notes.forEach(n=>{
+    const el=document.createElement('div'); el.className='note'; el.dataset.id=n.id;
+    el.style.cssText=`left:${n.x}px;top:${n.y}px;background:${n.color};z-index:${n.z||1}`;
+    el.innerHTML=`<div class="ntext" contenteditable="true" spellcheck="false"></div>
+      <div class="nfoot">${NOTE_COLORS.map(c=>`<span class="sw ${c===n.color?'on':''}" data-c="${c}" style="background:${c}"></span>`).join('')}
+      <span class="ndel">✕</span></div>`;
+    el.querySelector('.ntext').textContent=n.text||'';
+    wireNote(el,n); wallEl.appendChild(el);
+  });
+}
+function wireNote(el,n){
+  const tx=el.querySelector('.ntext');
+  tx.addEventListener('input',()=>{ n.text=tx.textContent; saveNotes(); });
+  el.querySelectorAll('.sw').forEach(sw=>sw.addEventListener('click',e=>{e.stopPropagation();
+    n.color=sw.dataset.c; el.style.background=n.color; el.querySelectorAll('.sw').forEach(s=>s.classList.toggle('on',s.dataset.c===n.color)); saveNotes();}));
+  el.querySelector('.ndel').addEventListener('click',e=>{e.stopPropagation(); if(confirm('刪除這張便利貼？')){ notes=notes.filter(x=>x!==n); saveNotes(); renderNotes(); }});
+  el.addEventListener('pointerdown',e=>{
+    if(e.target.closest('.ntext')||e.target.closest('.sw')||e.target.closest('.ndel')) return;
+    e.preventDefault(); n.z=++topZ; el.style.zIndex=topZ;
+    el.classList.add('drag'); el.setPointerCapture(e.pointerId);
+    const r=wallEl.getBoundingClientRect(), sx=e.clientX, sy=e.clientY, ox=n.x, oy=n.y; let moved=false;
+    const mv=ev=>{ moved=true; n.x=Math.max(0,Math.min(r.width-60,ox+ev.clientX-sx)); n.y=Math.max(0,Math.min(r.height-40,oy+ev.clientY-sy)); el.style.left=n.x+'px'; el.style.top=n.y+'px'; };
+    const up=()=>{ el.classList.remove('drag'); el.removeEventListener('pointermove',mv); el.removeEventListener('pointerup',up); if(moved) saveNotes(); };
+    el.addEventListener('pointermove',mv); el.addEventListener('pointerup',up);
+  });
+}
+$('#addNote').addEventListener('click',()=>{
+  const r=wallEl.getBoundingClientRect();
+  notes.push({id:uid(),text:'',color:NOTE_COLORS[Math.floor(Math.random()*3)],
+    x:Math.round(20+Math.random()*Math.max(40,r.width-230)),y:Math.round(20+Math.random()*Math.max(40,r.height-190)),z:++topZ});
+  saveNotes(); renderNotes();
+});
+
+/* ════════ 2) WEEKLY TASKS ════════ */
+let tasks = store.get('tasks',{});
+let weekOffset = 0;
+const WD = ['一','二','三','四','五','六','日'];
+function mondayOf(off){ const d=new Date(); d.setHours(0,0,0,0); const dow=(d.getDay()+6)%7; d.setDate(d.getDate()-dow+off*7); return d; }
+function fmt(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function saveTasks(){ store.set('tasks',tasks); }
+function renderWeek(){
+  const mon=mondayOf(weekOffset), grid=$('#weekGrid'), tISO=todayISO(); grid.innerHTML='';
+  const end=new Date(mon); end.setDate(end.getDate()+6);
+  $('#weekLabel').textContent=`${mon.getMonth()+1}/${mon.getDate()} – ${end.getMonth()+1}/${end.getDate()}`;
+  for(let i=0;i<7;i++){
+    const d=new Date(mon); d.setDate(d.getDate()+i); const key=fmt(d); const list=tasks[key]||[];
+    const col=document.createElement('div'); col.className='daycol'+(key===tISO?' today':'');
+    col.innerHTML=`<div class="dayhd"><div class="wd">週${WD[i]}</div><div class="dt">${d.getMonth()+1}/${d.getDate()}</div></div>
+      <div class="tasklist"></div>
+      <div class="addtask"><input placeholder="新增…" data-k="${key}"><button data-k="${key}">＋</button></div>`;
+    const tl=col.querySelector('.tasklist');
+    list.forEach(t=>{
+      const row=document.createElement('div'); row.className='task'+(t.done?' done':'');
+      row.innerHTML=`<input type="checkbox" ${t.done?'checked':''}><span class="tt"></span><span class="x">✕</span>`;
+      row.querySelector('.tt').textContent=t.text;
+      row.querySelector('input').addEventListener('change',()=>{ t.done=!t.done; saveTasks(); row.classList.toggle('done',t.done); });
+      row.querySelector('.x').addEventListener('click',()=>{ tasks[key]=list.filter(x=>x!==t); saveTasks(); renderWeek(); });
+      tl.appendChild(row);
+    });
+    grid.appendChild(col);
+  }
+  grid.querySelectorAll('.addtask button').forEach(b=>b.addEventListener('click',()=>addTask(b.dataset.k)));
+  grid.querySelectorAll('.addtask input').forEach(inp=>inp.addEventListener('keydown',e=>{ if(e.key==='Enter') addTask(inp.dataset.k); }));
+}
+function addTask(key){
+  const inp=$(`.addtask input[data-k="${key}"]`); const v=inp.value.trim(); if(!v) return;
+  (tasks[key]=tasks[key]||[]).push({id:uid(),text:v,done:false}); saveTasks(); renderWeek();
+  const ni=$(`.addtask input[data-k="${key}"]`); if(ni) ni.focus();
+}
+$('#prevWeek').onclick=()=>{weekOffset--;renderWeek();};
+$('#nextWeek').onclick=()=>{weekOffset++;renderWeek();};
+$('#thisWeek').onclick=()=>{weekOffset=0;renderWeek();};
+
+/* ════════ 3) CONTACTS ════════ */
+let contacts = store.get('contacts',null);
+if(contacts===null){ contacts=[]; store.set('contacts',contacts); }   // 預設空白，聯絡人自行新增（不寫死於公開檔案）
+function saveContacts(){ store.set('contacts',contacts); }
+function renderContacts(){
+  const q=$('#contactSearch').value.trim().toLowerCase(); const grid=$('#contactGrid'); grid.innerHTML='';
+  const list=contacts.filter(c=>!q||[c.dept,c.name,c.ext,c.email].join(' ').toLowerCase().includes(q));
+  if(!list.length){ grid.innerHTML='<div style="color:var(--dim);padding:20px">找不到聯絡人</div>'; return; }
+  list.forEach(c=>{
+    const el=document.createElement('div'); el.className='ccard';
+    el.innerHTML=`<span class="dept">${esc(c.dept||'—')}</span>
+      <div class="cname">${esc(c.name||'')}</div>
+      <div class="crow">分機 <b>${esc(c.ext||'—')}</b></div>
+      <div class="crow">✉️ <b>${esc(c.email||'')}</b></div>
+      <div class="cbtns"><button data-a="copy">📋 複製</button><button data-a="edit">✎ 編輯</button><button data-a="del">🗑</button></div>`;
+    el.querySelector('[data-a="copy"]').onclick=()=>copy(`${c.name}／${c.dept}／分機 ${c.ext||'—'}／${c.email}`);
+    el.querySelector('[data-a="edit"]').onclick=()=>editContact(c);
+    el.querySelector('[data-a="del"]').onclick=()=>{ if(confirm('刪除此聯絡人？')){ contacts=contacts.filter(x=>x!==c); saveContacts(); renderContacts(); } };
+    grid.appendChild(el);
+  });
+}
+function editContact(c){
+  const name=prompt('姓名',c.name); if(name===null) return;
+  const dept=prompt('部門',c.dept)??c.dept;
+  const ext=prompt('分機',c.ext)??c.ext;
+  const email=prompt('Email',c.email)??c.email;
+  Object.assign(c,{name,dept,ext,email}); saveContacts(); renderContacts();
+}
+$('#addContact').onclick=()=>{ const c={id:uid(),dept:'',name:'',ext:'',email:''}; contacts.unshift(c); editContact(c); };
+$('#contactSearch').addEventListener('input',renderContacts);
+
+/* ════════ 5) SOCIAL RECORDS ════════ */
+let records = store.get('records',[]);
+function saveRecords(){ store.set('records',records); }
+
+/* 時間工具 */
+function weekRange(){ const m=mondayOf(0); const e=new Date(m); e.setDate(e.getDate()+6); e.setHours(23,59,59,999); return [m,e]; }
+function quarterRange(){ const d=new Date(); const q=Math.floor(d.getMonth()/3); const s=new Date(d.getFullYear(),q*3,1); const e=new Date(d.getFullYear(),q*3+3,0,23,59,59,999); return [s,e]; }
+function inRange(iso,[s,e]){ if(!iso) return false; const d=new Date(iso+'T00:00:00'); return d>=s&&d<=e; }
+function sumCount(pred,range){ return records.filter(r=>pred(r)&&inRange(r.inDate,range)).reduce((a,r)=>a+(Number(r.count)||0),0); }
+function hasRec(pred,range){ return records.some(r=>pred(r)&&inRange(r.inDate,range)); }
+
+function renderStats(){
+  const wk=weekRange(), qt=quarterRange();
+  const P=(pf,cat)=>r=>r.platform===pf&&r.category===cat;
+  const metric=(name,pf,cat)=>({name,week:sumCount(P(pf,cat),wk),q:sumCount(P(pf,cat),qt)});
+  const list=[
+    metric('Line 進稿','Line','進稿'),
+    {status:true},
+    metric('FB 進稿','FB','進稿'),
+    metric('FB 導言','FB','導言'),
+    metric('IG 限動','IG','限動'),
+    metric('IG 貼文','IG','貼文'),
+    metric('YT 進稿','YT','進稿'),
+    metric('Threads 進稿','Threads','進稿'),
+  ];
+  const abn=hasRec(P('Line','異常'),wk), oth=hasRec(P('Line','其他'),wk);
+  const g=$('#statGrid'); g.innerHTML='';
+  list.forEach(m=>{
+    const el=document.createElement('div'); el.className='stat';
+    if(m.status){
+      el.classList.add('status'); if(abn) el.classList.add('alert');
+      el.innerHTML=`<div class="sname">🚦 Line 狀態</div>
+        <div class="badges">
+          <span class="badge"><span class="led ${abn?'alert':''}"></span>異常：${abn?'<b style="color:var(--danger)">有</b>':'無'}</span>
+          <span class="badge"><span class="led ${oth?'on':''}"></span>其他：${oth?'有':'無'}</span>
+        </div>${abn?'<div style="font-size:11px;color:var(--danger);margin-top:6px">⚠️ 本週有異常</div>':''}`;
+    } else {
+      el.innerHTML=`<div class="sname">${esc(m.name)}</div>
+        <div class="snums"><span class="sweek">${m.week}</span>
+        <span class="sq">本季 <b>${m.q}</b></span></div>
+        <div style="font-size:10.5px;color:var(--dim);margin-top:6px">本週 / 本季累計</div>`;
+    }
+    g.appendChild(el);
+  });
+}
+
+/* 連動表單 */
+function fillSelect(sel,arr,val){ sel.innerHTML=arr.map(o=>`<option ${o===val?'selected':''}>${esc(o)}</option>`).join(''); }
+function initRecForm(){
+  $('#f_combo').innerHTML=COMBOS.map(c=>`<option value="${esc(c.v)}">${esc(c.label)}</option>`).join('');
+  fillSelect($('#f_type'),TYPES,TYPES[0]);
+  $('#f_fanpage').innerHTML=FANPAGES.map(f=>`<option value="${esc(f)}">${esc(fanpageLabel(f))}</option>`).join('');
+  $('#f_fanpage').value=UNI_NEWS;
+  $('#f_inDate').value=todayISO(); $('#f_upDate').value=todayISO();
+  cascade();
+}
+function cascade(){
+  const pf=fPF(), cat=fCAT();
+  const isFB=pf==='FB', fbSubmit=isFB&&cat==='進稿';
+  $('#wrap_shot').classList.toggle('hidden',!fbSubmit);      // 上刊截圖：僅 FB 進稿
+  $('#wrap_fanpage').classList.toggle('hidden',!fbSubmit);   // 粉絲團：僅 FB 進稿
+  const isUni=fbSubmit&&$('#f_fanpage').value===UNI_NEWS;
+  $('#wrap_nth').classList.toggle('hidden',!isUni);          // 第X則：FB+聯合新聞網
+  $('#wrap_type').classList.toggle('hidden',!needType(pf,cat)); // 類型：FB進稿/IG限動/IG貼文/YT進稿/Threads進稿
+  const lineNote=pf==='Line'&&(cat==='異常'||cat==='其他');
+  $('#wrap_reason').classList.toggle('hidden',!lineNote);    // 原因說明：Line 異常/其他
+  let hint='';
+  if(fbSubmit) hint='＊ FB 進稿：已展開截圖與粉絲團';
+  if(isUni) hint='＊ 聯合新聞網：可填「第 X 則」';
+  if(lineNote) hint='＊ Line 異常/其他：請填原因說明';
+  $('#cascadeHint').textContent=hint;
+  updateInline();
+}
+$('#f_combo').addEventListener('change',cascade);
+$('#f_fanpage').addEventListener('change',cascade);
+
+$('#archiveRec').addEventListener('click',()=>{
+  const pf=fPF(), cat=fCAT();
+  const rec={ id:uid(), platform:pf, category:cat,
+    inDate:$('#f_inDate').value||todayISO(), upDate:$('#f_upDate').value||'',
+    activity:$('#f_activity').value.trim(), count:Number($('#f_count').value)||1,
+    shot:(pf==='FB'&&cat==='進稿')?$('#f_shot').checked:false,
+    fanpage:(pf==='FB'&&cat==='進稿')?$('#f_fanpage').value:'',
+    nth:(pf==='FB'&&cat==='進稿'&&$('#f_fanpage').value===UNI_NEWS)?$('#f_nth').value.trim():'',
+    type:needType(pf,cat)?$('#f_type').value:'',
+    reason:((pf==='Line'&&(cat==='異常'||cat==='其他'))||(pf==='FB'&&cat==='進稿'))?$('#f_reason').value.trim():''
+  };
+  if(!rec.activity){ toast('請填活動名稱'); return; }
+  rec.format=buildFormat();   // 一併存下組好的格式字串
+  records.unshift(rec); saveRecords(); renderHist(); renderStats();
+  // 清空、日期歸今天
+  $('#f_activity').value=''; $('#f_count').value=1; $('#f_nth').value=''; $('#f_reason').value=''; $('#f_shot').checked=false;
+  $('#f_inDate').value=todayISO(); $('#f_upDate').value=todayISO();
+  updateInline();
+  toast('已歸檔 ✓');
+});
+
+$('#clearRecords').addEventListener('click',()=>{
+  if(!records.length){ toast('目前沒有紀錄'); return; }
+  if(confirm(`確定清除全部 ${records.length} 筆歷史紀錄？此動作無法復原（雲端也會一起清除）。`)){
+    records=[]; saveRecords(); renderHist(); renderStats(); toast('已清除全部紀錄');
+  }
+});
+
+/* 活動名稱整合顯示：FB 進稿 → 名稱【粉絲團 第X則】(原因) */
+function activityDisplay(r){
+  let s=esc(r.activity);
+  if(r.platform==='FB'&&r.category==='進稿'&&r.fanpage){
+    const fp=fanpageLabel(r.fanpage)+(r.nth?` 第${esc(r.nth)}則`:'');
+    s+=` <b style="color:var(--accent-2)">【${esc(fp)}】</b>`;
+    if(r.reason) s+=` <span style="color:var(--muted)">(${esc(r.reason)})</span>`;
+  }
+  return s;
+}
+function renderHist(){
+  const tb=$('#histBody'); tb.innerHTML='';
+  if(!records.length){ tb.innerHTML='<tr><td colspan="8" style="color:var(--dim);text-align:center;padding:22px">尚無紀錄</td></tr>'; return; }
+  records.forEach(r=>{
+    const tr=document.createElement('tr'); tr.dataset.id=r.id;
+    tr.innerHTML=`
+      <td data-edit="platform"><span class="pill pf-${esc(r.platform)}">${esc(r.platform)}</span></td>
+      <td data-edit="category">${esc(r.category)}</td>
+      <td data-edit="inDate">${esc(r.inDate)}</td>
+      <td data-edit="upDate">${esc(r.upDate||'—')}</td>
+      <td data-edit="activity">${activityDisplay(r)}</td>
+      <td data-edit="shot" title="雙擊切換">${r.shot?'✅':'—'}</td>
+      <td data-edit="reason">${esc(r.reason||'—')}</td>
+      <td><span class="rowdel" title="刪除">🗑</span></td>`;
+    tr.querySelector('.rowdel').onclick=()=>{ if(confirm('刪除此紀錄？')){ records=records.filter(x=>x!==r); saveRecords(); renderHist(); renderStats(); } };
+    tr.querySelectorAll('td[data-edit]').forEach(td=>td.addEventListener('dblclick',()=>editCell(td,r)));
+    tb.appendChild(tr);
+  });
+}
+function editCell(td,r){
+  const f=td.dataset.edit;
+  if(f==='shot'){ r.shot=!r.shot; saveRecords(); renderHist(); renderStats(); return; }
+  if(td.querySelector('input,select')) return;
+  const cur=r[f]||''; td.classList.add('editing-cell'); let ctrl;
+  if(f==='platform'){ ctrl=document.createElement('select'); ctrl.innerHTML=PLATFORMS.map(p=>`<option ${p===cur?'selected':''}>${p}</option>`).join(''); }
+  else if(f==='category'){ ctrl=document.createElement('select'); const opts=CATEGORIES[r.platform]||[cur]; ctrl.innerHTML=opts.map(p=>`<option ${p===cur?'selected':''}>${p}</option>`).join(''); }
+  else if(f==='inDate'||f==='upDate'){ ctrl=document.createElement('input'); ctrl.type='date'; ctrl.value=cur; }
+  else { ctrl=document.createElement('input'); ctrl.type='text'; ctrl.value=cur; }
+  td.innerHTML=''; td.appendChild(ctrl); ctrl.focus();
+  const commit=()=>{ r[f]=ctrl.value; if(f==='platform'){ const cats=CATEGORIES[r.platform]||[]; if(!cats.includes(r.category)) r.category=cats[0]||r.category; }
+    saveRecords(); renderHist(); renderStats(); };
+  ctrl.addEventListener('blur',commit);
+  ctrl.addEventListener('keydown',e=>{ if(e.key==='Enter') ctrl.blur(); if(e.key==='Escape'){ renderHist(); } });
+  if(ctrl.tagName==='SELECT') ctrl.addEventListener('change',()=>ctrl.blur());
+}
+
+/* ════════ 直接帶入：格式字串 + 通訊名單（內嵌於「新增紀錄」，無彈窗）════════ */
+const TYPE_COMBOS = new Set(['FB|進稿','IG|限動','IG|貼文','YT|進稿','Threads|進稿']);
+const needType = (pf,cat)=>TYPE_COMBOS.has(pf+'|'+cat);
+function mmdd(){ const d=new Date(); return String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0'); }
+function mmddOf(iso){ if(!iso) return mmdd(); const p=iso.split('-'); return p.length===3 ? p[1]+p[2] : mmdd(); }
+
+// 格式：上稿日期【平台類別】活動名稱[/粉絲團-第X則][/類型]
+//  例：0731【FB進稿】金華山置入宣傳/聯合新聞網-第1則/圖卡貼文
+function buildFormat(){
+  const pf=fPF(), cat=fCAT();
+  const act=$('#f_activity').value.trim()||'活動名稱';
+  let s=`${mmddOf($('#f_upDate').value)}【${fLabel()}】${act}`;
+  if(pf==='FB'&&cat==='進稿'&&$('#f_fanpage').value){
+    const fp=$('#f_fanpage').value, nth=$('#f_nth').value.trim();
+    s+=`/${fanpageLabel(fp)}${(fp===UNI_NEWS&&nth)?`-第${nth}則`:''}`;
+  }
+  if(needType(pf,cat)) s+=`/${$('#f_type').value}`;
+  return s;
+}
+function renderFormContacts(){
+  const pf=fPF(), cat=fCAT(), fp=$('#f_fanpage').value, box=$('#f_contacts');
+  if(!(pf==='FB'&&cat==='進稿')||!fp||!fanpages[fp]){ box.classList.add('hidden'); box.innerHTML=''; return; }
+  const ent=fanpages[fp]; const to=ent.to||[], cc=ent.cc||[];
+  const mk=(title,which,arr)=>`<div class="cbox"><h4><span>${title}（${arr.length}）</span>
+      <span style="display:flex;gap:5px"><button data-all>複製全部</button><button data-add="${which}">＋ 新增</button></span></h4>
+    ${arr.map((p,i)=>`<div class="crow2"><span>${esc(p)}</span>
+      <button data-mail="${esc(emailOnly(p))}">複製</button>
+      <button data-del="${which}|${i}" title="移除">✕</button></div>`).join('')||'<div style="font-size:11.5px;color:var(--dim);padding:4px 0">（尚無）</div>'}</div>`;
+  box.classList.remove('hidden');
+  box.innerHTML=mk('📧 收件者','to',to)+mk('📑 副本','cc',cc);
+  const boxes=box.querySelectorAll('.cbox');
+  boxes[0].querySelector('[data-all]').onclick=()=>copy(to.map(emailOnly).join('; '));
+  boxes[1].querySelector('[data-all]').onclick=()=>copy(cc.map(emailOnly).join('; '));
+  box.querySelectorAll('[data-mail]').forEach(b=>b.onclick=()=>copy(b.dataset.mail));
+  box.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{
+    const v=prompt('新增聯絡人（可含姓名，例：王小明 wang@example.com）'); if(!v||!v.trim()) return;
+    (fanpages[fp][b.dataset.add]=fanpages[fp][b.dataset.add]||[]).push(v.trim());
+    saveFanpages(); renderFormContacts();
+  });
+  box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    const [which,i]=b.dataset.del.split('|');
+    if(confirm('移除這位聯絡人？')){ fanpages[fp][which].splice(+i,1); saveFanpages(); renderFormContacts(); }
+  });
+}
+function updateInline(){ $('#f_preview').textContent=buildFormat(); renderFormContacts(); }
+['input','change'].forEach(ev=>{
+  ['#f_activity','#f_upDate','#f_nth','#f_type','#f_count'].forEach(sel=>$(sel).addEventListener(ev,updateInline));
+});
+$('#copyPreview').onclick=()=>copy(buildFormat());
+
+/* ════════ 6) SOP KNOWLEDGE BASE ════════ */
+let sops = store.get('sops',null);
+let sopCats = store.get('sopcats',null);
+if(sops===null){ sops=[{id:uid(),title:'範例：社群進稿標準流程',tags:['社群','流程'],
+  content:'# 進稿流程\n\n1. 於「社群進稿」分頁**新增紀錄**\n2. FB 進稿用 **繪圖表單** 產生格式字串與通訊名單\n3. 寄稿後於歷史紀錄確認\n\n> 提示：雙擊歷史表格任一格可即時修改，統計會自動重算。',
+  attachments:[],images:[],created:Date.now()}]; store.set('sops',sops); }
+if(sopCats===null){ sopCats=['社群','流程','公告']; store.set('sopcats',sopCats); }
+let curSop=null, sopEditing=false, catFilter='';
+function saveSops(){ store.set('sops',sops); } function saveCats(){ store.set('sopcats',sopCats); }
+
+function mdToHtml(md){
+  const lines=String(md).replace(/\r/g,'').split('\n'); let html='',inUl=false,inOl=false,inCode=false;
+  const inline=s=>esc(s).replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
+    .replace(/\*([^*]+)\*/g,'<i>$1</i>').replace(/!\[([^\]]*)\]\(([^)]+)\)/g,'<img alt="$1" src="$2">')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  const closeLists=()=>{ if(inUl){html+='</ul>';inUl=false;} if(inOl){html+='</ol>';inOl=false;} };
+  for(let ln of lines){
+    if(ln.trim().startsWith('```')){ if(inCode){html+='</code></pre>';inCode=false;} else{closeLists();html+='<pre><code>';inCode=true;} continue; }
+    if(inCode){ html+=esc(ln)+'\n'; continue; }
+    if(/^###\s/.test(ln)){closeLists();html+='<h3>'+inline(ln.slice(4))+'</h3>';continue;}
+    if(/^##\s/.test(ln)){closeLists();html+='<h2>'+inline(ln.slice(3))+'</h2>';continue;}
+    if(/^#\s/.test(ln)){closeLists();html+='<h1>'+inline(ln.slice(2))+'</h1>';continue;}
+    if(/^>\s?/.test(ln)){closeLists();html+='<blockquote>'+inline(ln.replace(/^>\s?/,''))+'</blockquote>';continue;}
+    if(/^[-*]\s/.test(ln)){ if(!inUl){closeLists();html+='<ul>';inUl=true;} html+='<li>'+inline(ln.slice(2))+'</li>';continue; }
+    if(/^\d+\.\s/.test(ln)){ if(!inOl){closeLists();html+='<ol>';inOl=true;} html+='<li>'+inline(ln.replace(/^\d+\.\s/,''))+'</li>';continue; }
+    if(ln.trim()===''){closeLists();continue;}
+    closeLists(); html+='<p>'+inline(ln)+'</p>';
+  }
+  if(inCode) html+='</code></pre>'; closeLists(); return html;
+}
+const fileIcon=t=>/pdf/.test(t)?'📕':/word|doc/.test(t)?'📘':/excel|sheet|xls/.test(t)?'📗':/image/.test(t)?'🖼️':'📎';
+
+function renderCatChips(){
+  const c=$('#catChips');
+  c.innerHTML=`<span class="catchip ${catFilter===''?'on':''}" data-c="">全部</span>`+
+    sopCats.map(t=>`<span class="catchip ${catFilter===t?'on':''}" data-c="${esc(t)}">${esc(t)}</span>`).join('');
+  c.querySelectorAll('.catchip').forEach(ch=>ch.onclick=()=>{ catFilter=ch.dataset.c; renderCatChips(); renderSopList(); });
+}
+function renderSopList(){
+  const q=$('#sopSearch').value.trim().toLowerCase(); const box=$('#sopItems'); box.innerHTML='';
+  const list=sops.filter(s=>(!catFilter||(s.tags||[]).includes(catFilter))&&(!q||(s.title+ ' '+s.content).toLowerCase().includes(q)));
+  if(!list.length){ box.innerHTML='<div style="color:var(--dim);font-size:12px;padding:10px">無符合項目</div>'; return; }
+  list.forEach(s=>{
+    const el=document.createElement('div'); el.className='sopitem'+(curSop&&curSop.id===s.id?' active':'');
+    el.innerHTML=`<div class="st">${esc(s.title||'未命名')}</div><div class="sc">${(s.tags||[]).map(t=>`<span>${esc(t)}</span>`).join('')}</div>`;
+    el.onclick=()=>{ curSop=s; sopEditing=false; renderSopMain(); renderSopList(); };
+    box.appendChild(el);
+  });
+}
+function renderSopMain(){
+  const m=$('#sopMain');
+  if(!curSop){ m.innerHTML='<div class="empty"><div style="font-size:40px;margin-bottom:8px">📚</div><div>從左側選一篇 SOP，或按「＋ 新增 SOP」</div></div>'; return; }
+  if(sopEditing) renderSopEditor(); else renderSopReader();
+}
+function renderSopReader(){
+  const s=curSop, m=$('#sopMain');
+  const atts=(s.attachments||[]);
+  m.innerHTML=`
+    <div class="sophead">
+      <h2>${esc(s.title||'未命名')}</h2>
+      <button class="btn ghost sm" id="editSop">✎ 編輯</button>
+      <button class="btn danger sm" id="delSop">🗑 刪除</button>
+    </div>
+    <div class="sc" style="margin-bottom:14px;display:flex;gap:5px;flex-wrap:wrap">${(s.tags||[]).map(t=>`<span style="font-size:11px;color:var(--accent-2);background:var(--accent-soft);padding:2px 10px;border-radius:20px">${esc(t)}</span>`).join('')}</div>
+    <div class="reader">${mdToHtml(s.content||'')}</div>
+    ${atts.length?`<div class="attachzone"><h4>📎 附件下載（${atts.length}）</h4><div class="attgrid">${
+      atts.map((a,i)=>`<div class="att"><span class="ico">${fileIcon(a.type)}</span><a class="aname" href="${a.data}" download="${esc(a.name)}" title="${esc(a.name)}">${esc(a.name)}</a></div>`).join('')
+    }</div></div>`:''}`;
+  $('#editSop').onclick=()=>{ sopEditing=true; renderSopMain(); };
+  $('#delSop').onclick=()=>{ if(confirm('刪除此 SOP？')){ sops=sops.filter(x=>x!==curSop); curSop=null; saveSops(); renderSopList(); renderSopMain(); } };
+}
+function renderSopEditor(){
+  const s=curSop, m=$('#sopMain');
+  m.innerHTML=`
+    <div class="sophead">
+      <input class="inp" id="e_title" value="${esc(s.title||'')}" placeholder="SOP 標題" style="font-size:18px;font-weight:700">
+      <button class="btn sm" id="saveSop">💾 儲存</button>
+      <button class="btn ghost sm" id="cancelSop">取消</button>
+    </div>
+    <label style="font-size:11.5px;color:var(--muted)">分類標籤</label>
+    <div class="tageditor" id="tagEditor"></div>
+    <label style="font-size:11.5px;color:var(--muted);margin-top:6px;display:block">內文（支援 Markdown：# 標題、**粗體**、- 清單、\`程式\`、&gt; 引言、[連結](url)）</label>
+    <textarea class="inp" id="e_content" style="min-height:220px;font-family:ui-monospace,monospace;font-size:13px">${esc(s.content||'')}</textarea>
+    <div class="dropzone" id="dropzone">🖇️ 拖曳檔案到此，或 <b>Ctrl+V 貼上截圖</b>（支援圖片 / PDF / Word / Excel）</div>
+    <div class="imgprev" id="imgPrev"></div>
+    <div class="attachzone" id="attEdit"></div>`;
+  const tagEd=$('#tagEditor');
+  const drawTags=()=>{
+    tagEd.innerHTML=(s.tags||[]).map((t,i)=>`<span class="tagpill">${esc(t)}<button data-i="${i}">✕</button></span>`).join('')
+      +`<button class="btn ghost sm" id="addTag" style="padding:3px 10px">＋ 標籤</button>`;
+    tagEd.querySelectorAll('.tagpill button').forEach(b=>b.onclick=()=>{ s.tags.splice(+b.dataset.i,1); drawTags(); });
+    $('#addTag').onclick=()=>{
+      const t=prompt('輸入分類標籤（會加入全域分類）'); if(!t) return; const v=t.trim(); if(!v) return;
+      s.tags=s.tags||[]; if(!s.tags.includes(v)) s.tags.push(v);
+      if(!sopCats.includes(v)){ sopCats.push(v); saveCats(); renderCatChips(); }
+      drawTags();
+    };
+  };
+  drawTags();
+  const drawAtts=()=>{
+    const atts=s.attachments||[], imgs=atts.filter(a=>/image/.test(a.type)), files=atts.filter(a=>!/image/.test(a.type));
+    $('#imgPrev').innerHTML=imgs.map(a=>`<div class="ip"><img src="${a.data}"><button data-id="${a.aid}">✕</button></div>`).join('');
+    $('#attEdit').innerHTML=files.length?`<h4>📎 附件（${files.length}）</h4><div class="attgrid">${files.map(a=>`<div class="att"><span class="ico">${fileIcon(a.type)}</span><span class="aname" title="${esc(a.name)}">${esc(a.name)}</span><span class="adel" data-id="${a.aid}">✕</span></div>`).join('')}</div>`:'';
+    $('#imgPrev').querySelectorAll('button').forEach(b=>b.onclick=()=>{ s.attachments=s.attachments.filter(a=>a.aid!==b.dataset.id); drawAtts(); });
+    $('#attEdit').querySelectorAll('.adel').forEach(b=>b.onclick=()=>{ s.attachments=s.attachments.filter(a=>a.aid!==b.dataset.id); drawAtts(); });
+  };
+  drawAtts();
+  const addFiles=files=>{ [...files].forEach(f=>{ const rd=new FileReader(); rd.onload=()=>{ s.attachments=s.attachments||[]; s.attachments.push({aid:uid(),name:f.name||('貼上圖片_'+mmdd()+'.png'),type:f.type,data:rd.result}); drawAtts(); }; rd.readAsDataURL(f); }); };
+  const dz=$('#dropzone');
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+  dz.addEventListener('drop',e=>{ e.preventDefault(); dz.classList.remove('over'); if(e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
+  $('#e_content').addEventListener('paste',e=>{ const items=[...(e.clipboardData||{}).items||[]]; const imgs=items.filter(i=>i.type.startsWith('image')); if(imgs.length){ imgs.forEach(i=>addFiles([i.getAsFile()])); } });
+  dz.addEventListener('paste',e=>{ const items=[...(e.clipboardData||{}).items||[]]; items.filter(i=>i.type.startsWith('image')).forEach(i=>addFiles([i.getAsFile()])); });
+  $('#saveSop').onclick=()=>{ s.title=$('#e_title').value.trim()||'未命名'; s.content=$('#e_content').value; saveSops(); sopEditing=false; renderSopMain(); renderSopList(); toast('已儲存 ✓'); };
+  $('#cancelSop').onclick=()=>{ sops=store.get('sops',sops); const fresh=sops.find(x=>x.id===s.id); curSop=fresh||null; sopEditing=false; renderSopMain(); renderSopList(); };
+}
+$('#newSop').onclick=()=>{ const s={id:uid(),title:'新 SOP',tags:[],content:'',attachments:[],images:[],created:Date.now()}; sops.unshift(s); saveSops(); curSop=s; sopEditing=true; renderSopList(); renderSopMain(); };
+$('#sopSearch').addEventListener('input',renderSopList);
+
+/* ════════ 匯出 / 匯入 ════════ */
+$('#btnExport').onclick=()=>{
+  const data={notes,tasks,contacts,records,sops,sopcats:sopCats,_exported:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='workstation-backup-'+todayISO()+'.json'; a.click(); URL.revokeObjectURL(a.href); toast('已匯出備份 ✓');
+};
+$('#btnImport').onclick=()=>$('#importFile').click();
+$('#importFile').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return; const rd=new FileReader();
+  rd.onload=()=>{ try{ const d=JSON.parse(rd.result); if(!confirm('匯入將覆蓋目前所有資料，確定？')) return;
+    notes=d.notes||[]; tasks=d.tasks||{}; contacts=d.contacts||[]; records=d.records||[]; sops=d.sops||[]; sopCats=d.sopcats||[];
+    store.set('notes',notes);store.set('tasks',tasks);store.set('contacts',contacts);store.set('records',records);store.set('sops',sops);store.set('sopcats',sopCats);
+    topZ=Math.max(1,...notes.map(n=>n.z||1)); curSop=null;
+    renderNotes();renderWeek();renderContacts();renderStats();renderHist();renderCatChips();renderSopList();renderSopMain();
+    toast('已還原備份 ✓'); }catch(err){ toast('檔案格式錯誤'); } e.target.value=''; };
+  rd.readAsText(f);
+});
+
+/* ════════ 雲端即時同步（所有資料）════════ */
+function setSync(cls,txt){ const el=$('#syncStatus'); if(!el) return; el.className='status '+cls; $('#syncTxt').textContent=txt; }
+
+function localRaw(k){ try{ return JSON.parse(localStorage.getItem('ws2_'+k)); }catch(e){ return null; } }
+
+// 把雲端傳回的資料套回畫面（不再寫回雲端，避免迴圈）
+function applyRemote(k,val){
+  try{ localStorage.setItem('ws2_'+k, JSON.stringify(val)); }catch(e){}
+  switch(k){
+    case 'notes':
+      if(document.querySelector('#noteWall .ntext:focus')) return;   // 正在編輯便利貼就先不覆蓋
+      notes=val||[]; topZ=Math.max(1,...notes.map(n=>n.z||1),1); renderNotes(); break;
+    case 'tasks':    tasks=val||{}; renderWeek(); break;
+    case 'contacts': contacts=val||[]; renderContacts(); break;
+    case 'records':  records=val||[]; renderStats(); renderHist(); break;
+    case 'sops':
+      if(sopEditing) return;                                         // 正在編輯 SOP 就先不覆蓋
+      sops=val||[]; if(curSop){ curSop=sops.find(s=>s.id===curSop.id)||null; }
+      renderCatChips(); renderSopList(); renderSopMain(); break;
+    case 'sopcats':  sopCats=val||[]; renderCatChips(); renderSopList(); break;
+    case 'fanpages': fanpages=val||{}; renderFormContacts(); break;
+  }
+}
+
+async function startCloud(){
+  const configured = !Object.values(firebaseConfig).some(v=>!v||v==='PASTE_HERE');
+  if(!configured){ setSync('local','本機模式（未設定雲端）'); return; }
+  try{
+    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js');
+    const fs = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
+    const app = initializeApp(firebaseConfig);
+    const db  = fs.getFirestore(app);
+    const col = fs.collection(db,'workstations',WORKSPACE_ID,'state');
+    cloud = {
+      write:(k,v)=>{ clearTimeout(writeTimers[k]); writeTimers[k]=setTimeout(()=>{
+        fs.setDoc(fs.doc(col,k),{json:JSON.stringify(v),ts:Date.now()})
+          .catch(e=>{ console.error(e); setSync('err','同步失敗（附件可能過大）'); });
+      },600); }
+    };
+    for(const k of CLOUD_KEYS){
+      const ref=fs.doc(col,k);
+      try{
+        const snap=await fs.getDoc(ref);
+        if(snap.exists()){ applyRemote(k, JSON.parse(snap.data().json)); }         // 雲端有 → 採用雲端
+        else { const local=localRaw(k); if(local!=null) await fs.setDoc(ref,{json:JSON.stringify(local),ts:Date.now()}); } // 雲端沒有 → 用本機種子
+      }catch(e){ console.error(e); }
+      fs.onSnapshot(ref, s=>{
+        if(!s.exists()) return;
+        const val=JSON.parse(s.data().json);
+        if(JSON.stringify(localRaw(k))===JSON.stringify(val)) return;   // 是自己寫的回音就跳過
+        applyRemote(k,val);
+      }, err=>{ console.error(err); setSync('err','同步中斷'); });
+    }
+    setSync('on','雲端已同步 · '+WORKSPACE_ID);
+  }catch(err){ console.error(err); setSync('err','雲端連線失敗，改用本機'); }
+}
+
+/* ════════ 進入密碼 ════════ */
+const AUTH_KEY='ws2_auth';
+let started=false;
+function enterApp(){
+  $('#gate').classList.add('out'); setTimeout(()=>$('#gate').classList.add('hidden'),520);
+  if(!started){ started=true; startCloud(); }        // 通過密碼才連雲端
+}
+function tryUnlock(){
+  if($('#gateInput').value===PASSCODE){ sessionStorage.setItem(AUTH_KEY,'1'); enterApp(); }
+  else {
+    $('#gateErr').style.opacity=1; $('#gateInput').value='';
+    const c=$('#gate .gate-card'); c.classList.add('shake'); setTimeout(()=>c.classList.remove('shake'),420);
+  }
+}
+$('#gateBtn').onclick=tryUnlock;
+$('#gateInput').addEventListener('keydown',e=>{ if(e.key==='Enter') tryUnlock(); });
+$('#gateInput').addEventListener('input',()=>{ $('#gateErr').style.opacity=0; });
+$('#btnLock').onclick=()=>{ sessionStorage.removeItem(AUTH_KEY); location.reload(); };
+
+/* ════════ INIT ════════ */
+initRecForm(); updateInline();
+renderNotes(); renderWeek(); renderContacts(); renderStats(); renderHist(); renderCatChips(); renderSopList();
+const savedTab=store.get('ui_tab','main');
+if(savedTab!=='main'){ const b=$(`.tab[data-tab="${savedTab}"]`); if(b) b.click(); }
+if(sessionStorage.getItem(AUTH_KEY)==='1'){ $('#gate').classList.add('hidden'); started=true; startCloud(); }
+else { setTimeout(()=>$('#gateInput').focus(),300); }
+</script>
+</body>
+</html>
