@@ -520,7 +520,8 @@ const DEFAULT_FANPAGES = {
   'udn瘋運動':{to:[],cc:[]},
   '報時光':{to:[],cc:[]},
   '噓星聞':{to:[],cc:[]},
-  '時尚/走跳世界':{to:[],cc:[]},
+  'udnSTYLE':{to:[],cc:[]},
+  '走跳世界':{to:[],cc:[]},
   '發燒車訊':{to:[],cc:[]},
   '女子漾':{to:[],cc:[]},
   '寵物部落':{to:[],cc:[]}
@@ -852,7 +853,8 @@ function buildFormat(){
 }
 function renderFormContacts(){
   const pf=fPF(), cat=fCAT(), fp=$('#f_fanpage').value, box=$('#f_contacts');
-  if(!(pf==='FB'&&cat==='進稿')||!fp||!fanpages[fp]){ box.classList.add('hidden'); box.innerHTML=''; return; }
+  if(!(pf==='FB'&&cat==='進稿')||!fp){ box.classList.add('hidden'); box.innerHTML=''; return; }
+  if(!fanpages[fp]) fanpages[fp]={to:[],cc:[]};   // 新粉絲團也顯示空白名單可直接＋新增
   const ent=fanpages[fp]; const to=ent.to||[], cc=ent.cc||[];
   const mk=(title,which,arr)=>`<div class="cbox"><h4><span>${title}（${arr.length}）</span>
       <span style="display:flex;gap:5px"><button data-all>複製全部</button><button data-add="${which}">＋ 新增</button></span></h4>
