@@ -154,6 +154,15 @@ textarea.inp{resize:vertical;min-height:80px;line-height:1.6}
 .cgroup{margin-bottom:20px}
 .cgroup-h{font-weight:700;font-size:14px;color:var(--accent-2);margin:2px 2px 11px;display:flex;align-items:center;gap:8px}
 .cgroup-h .n{font-size:11px;color:var(--muted);background:var(--accent-soft);padding:1px 8px;border-radius:20px;font-weight:600}
+.clist{display:flex;flex-direction:column;gap:6px}
+.citem{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:var(--r-sm);background:var(--glass-2);border:1px solid var(--border);box-shadow:var(--shadow-sm)}
+.citem .ci-main{flex:1;min-width:0}
+.citem .ci-name{font-weight:700;font-size:13.5px}
+.citem .ci-name small{font-weight:400;color:var(--muted);font-size:12px}
+.citem .ci-meta{font-size:12px;color:var(--muted);margin-top:2px;word-break:break-word}
+.citem .ci-btns{display:flex;gap:6px;flex:none}
+.citem .ci-btns .btn{padding:6px 10px;font-size:12px}
+@media(max-width:560px){.citem{flex-wrap:wrap}.citem .ci-btns{width:100%;justify-content:flex-end}}
 .allmail-box{margin-top:10px;font-size:12.5px;color:var(--muted);background:rgba(255,255,255,.55);border:1px solid var(--border-2);border-radius:var(--r-sm);padding:10px 12px;max-height:120px;overflow:auto;word-break:break-all;line-height:1.8;user-select:all}
 
 /* ── DASHBOARD ── */
@@ -738,16 +747,17 @@ function renderContacts(){
   Object.keys(groups).sort((a,b)=>a.localeCompare(b,'zh-Hant')).forEach(dept=>{
     const wrap=document.createElement('div'); wrap.className='cgroup';
     const h=document.createElement('div'); h.className='cgroup-h'; h.innerHTML=`${esc(dept)} <span class="n">${groups[dept].length}</span>`;
-    const cg=document.createElement('div'); cg.className='cardgrid';
+    const cg=document.createElement('div'); cg.className='clist';
     groups[dept].forEach(c=>{
-      const el=document.createElement('div'); el.className='ccard';
+      const el=document.createElement('div'); el.className='citem';
+      const meta=[c.position, c.ext?('分機 '+c.ext):'', c.email||'', c.assistant?('業助 '+c.assistant):'']
+        .filter(Boolean).map(esc).join(' <span style="color:var(--dim)">·</span> ');
       el.innerHTML=`
-        <div class="cname">${esc(c.name||'（未命名）')}${c.realname?` <small style="color:var(--muted);font-weight:400">(${esc(c.realname)})</small>`:''}</div>
-        ${c.position?`<div class="cpos">${esc(c.position)}</div>`:''}
-        <div class="crow">分機 <b>${esc(c.ext||'—')}</b></div>
-        <div class="crow">✉️ <b>${esc(c.email||'—')}</b></div>
-        ${c.assistant?`<div class="crow">業助 <b>${esc(c.assistant)}</b></div>`:''}
-        <div class="cbtns"><button data-a="copy">📋 複製 Email</button><button data-a="edit">✎</button><button data-a="del">🗑</button></div>`;
+        <div class="ci-main">
+          <span class="ci-name">${esc(c.name||'（未命名）')}${c.realname?` <small>(${esc(c.realname)})</small>`:''}</span>
+          <div class="ci-meta">${meta||'<span style="color:var(--dim)">（無其他資料）</span>'}</div>
+        </div>
+        <div class="ci-btns"><button class="btn" data-a="copy">📋 複製 Email</button><button class="btn ghost" data-a="edit" title="編輯">✎</button><button class="btn ghost" data-a="del" title="刪除">🗑</button></div>`;
       el.querySelector('[data-a="copy"]').onclick=()=>{ if(c.email) copy(c.email); else toast('此聯絡人沒有 Email'); };
       el.querySelector('[data-a="edit"]').onclick=()=>openContactModal(c);
       el.querySelector('[data-a="del"]').onclick=()=>{ if(confirm('刪除此聯絡人？')){ contacts=contacts.filter(x=>x!==c); saveContacts(); renderContacts(); } };
