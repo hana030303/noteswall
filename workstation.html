@@ -536,7 +536,7 @@ const emailOnly = s => { const m=String(s).match(/[\w.\-]+@[\w.\-]+/); return m?
 
 const PLATFORMS = ['Line','FB','IG','YT','Threads'];
 const CATEGORIES = { Line:['進稿','異常','其他'], FB:['進稿','導言'], IG:['限動','貼文'], YT:['進稿'], Threads:['進稿'] };
-const TYPES = ['廣編導流','影音貼文','圖卡貼文'];
+const TYPES = ['廣編導流','影音貼文','圖卡貼文','限時動態'];
 // 平台＋類別 合併成單一「類別」下拉；value 內部仍拆成 pf|cat 給統計/格式字串用
 const COMBOS = [
   {v:'FB|進稿',label:'FB進稿'}, {v:'FB|導言',label:'FB導言'},
@@ -741,16 +741,17 @@ function initRecForm(){
 function cascade(){
   const pf=fPF(), cat=fCAT();
   const isFB=pf==='FB', fbSubmit=isFB&&cat==='進稿';
+  const withType=needType(pf,cat);                          // FB進稿/IG限動/IG貼文/YT進稿/Threads進稿
   $('#wrap_shot').classList.toggle('hidden',!fbSubmit);      // 上刊截圖：僅 FB 進稿
-  $('#wrap_fanpage').classList.toggle('hidden',!fbSubmit);   // 粉絲團：僅 FB 進稿
+  $('#wrap_fanpage').classList.toggle('hidden',!withType);   // 粉絲團：上述皆有（預設聯合新聞網）
   const isUni=fbSubmit&&$('#f_fanpage').value===UNI_NEWS;
-  $('#wrap_nth').classList.toggle('hidden',!isUni);          // 第X則：FB+聯合新聞網
-  $('#wrap_type').classList.toggle('hidden',!needType(pf,cat)); // 類型：FB進稿/IG限動/IG貼文/YT進稿/Threads進稿
+  $('#wrap_nth').classList.toggle('hidden',!isUni);          // 第X則：僅 FB進稿+聯合新聞網
+  $('#wrap_type').classList.toggle('hidden',!withType);      // 類型
   const lineNote=pf==='Line'&&(cat==='異常'||cat==='其他');
   $('#wrap_reason').classList.toggle('hidden',!lineNote);    // 原因說明：Line 異常/其他
   let hint='';
-  if(fbSubmit) hint='＊ FB 進稿：已展開截圖與粉絲團';
-  if(isUni) hint='＊ 聯合新聞網：可填「第 X 則」';
+  if(withType) hint='＊ 已展開粉絲團與類型（預設聯合新聞網）';
+  if(fbSubmit) hint='＊ FB 進稿：另有上刊截圖；聯合新聞網可填「第 X 則」';
   if(lineNote) hint='＊ Line 異常/其他：請填原因說明';
   $('#cascadeHint').textContent=hint;
   updateInline();
@@ -764,7 +765,7 @@ $('#archiveRec').addEventListener('click',()=>{
     inDate:$('#f_inDate').value||todayISO(), upDate:$('#f_upDate').value||'',
     activity:$('#f_activity').value.trim(), count:Number($('#f_count').value)||1,
     shot:(pf==='FB'&&cat==='進稿')?$('#f_shot').checked:false,
-    fanpage:(pf==='FB'&&cat==='進稿')?$('#f_fanpage').value:'',
+    fanpage:needType(pf,cat)?$('#f_fanpage').value:'',
     nth:(pf==='FB'&&cat==='進稿'&&$('#f_fanpage').value===UNI_NEWS)?$('#f_nth').value.trim():'',
     type:needType(pf,cat)?$('#f_type').value:'',
     reason:((pf==='Line'&&(cat==='異常'||cat==='其他'))||(pf==='FB'&&cat==='進稿'))?$('#f_reason').value.trim():''
@@ -844,16 +845,18 @@ function buildFormat(){
   const pf=fPF(), cat=fCAT();
   const act=$('#f_activity').value.trim()||'活動名稱';
   let s=`${mmddOf($('#f_upDate').value)}【${fLabel()}】${act}`;
-  if(pf==='FB'&&cat==='進稿'&&$('#f_fanpage').value){
-    const fp=$('#f_fanpage').value, nth=$('#f_nth').value.trim();
-    s+=`/${fanpageLabel(fp)}${(fp===UNI_NEWS&&nth)?`-第${nth}則`:''}`;
+  if(needType(pf,cat)){
+    const fp=$('#f_fanpage').value;
+    if(fp){ const nth=$('#f_nth').value.trim();
+      s+=`/${fanpageLabel(fp)}${(pf==='FB'&&cat==='進稿'&&fp===UNI_NEWS&&nth)?`-第${nth}則`:''}`;
+    }
+    s+=`/${$('#f_type').value}`;
   }
-  if(needType(pf,cat)) s+=`/${$('#f_type').value}`;
   return s;
 }
 function renderFormContacts(){
   const pf=fPF(), cat=fCAT(), fp=$('#f_fanpage').value, box=$('#f_contacts');
-  if(!(pf==='FB'&&cat==='進稿')||!fp){ box.classList.add('hidden'); box.innerHTML=''; return; }
+  if(!needType(pf,cat)||!fp){ box.classList.add('hidden'); box.innerHTML=''; return; }
   if(!fanpages[fp]) fanpages[fp]={to:[],cc:[]};   // 新粉絲團也顯示空白名單可直接＋新增
   const ent=fanpages[fp]; const to=ent.to||[], cc=ent.cc||[];
   const mk=(title,which,arr)=>`<div class="cbox"><h4><span>${title}（${arr.length}）</span>
