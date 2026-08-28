@@ -276,6 +276,16 @@ table.hist td[data-edit]:hover{background:var(--accent-soft)}
 .shake{animation:shake .4s var(--ease)}
 @keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(3px)}30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}
 
+/* 複製區 snippets */
+.snipadd{display:flex;flex-direction:column;gap:10px;margin-bottom:18px;max-width:660px}
+.snipadd textarea.inp{min-height:70px}
+.sniplist{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.snipcard{padding:14px;border-radius:var(--r-md);background:var(--glass-2);border:1px solid var(--border);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:10px}
+.snipcard .sniptitle{font-weight:700;font-size:14px;word-break:break-word}
+.snipcard .sniptext{font-size:12.5px;color:var(--muted);white-space:pre-wrap;word-break:break-word;max-height:140px;overflow:auto;background:rgba(255,255,255,.55);border:1px solid var(--border-2);border-radius:var(--r-sm);padding:8px 10px}
+.snipcard .snipbtns{display:flex;gap:6px}
+.snipcard .snipbtns .btn{padding:7px 10px;font-size:12px}
+
 /* toast */
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);z-index:200;
   background:var(--ink);color:#fff;padding:11px 20px;border-radius:30px;font-size:13px;font-weight:500;
@@ -349,6 +359,7 @@ table.hist td[data-edit]:hover{background:var(--accent-soft)}
       <button class="subtab active" data-sub="notes">📌 便利貼</button>
       <button class="subtab" data-sub="weekly">🗓️ 當週工作</button>
       <button class="subtab" data-sub="contacts">👥 聯絡人</button>
+      <button class="subtab" data-sub="snippets">📋 複製區</button>
     </div>
 
     <!-- notes -->
@@ -381,6 +392,18 @@ table.hist td[data-edit]:hover{background:var(--accent-soft)}
         <button class="btn" id="addContact">＋ 新增聯絡人</button>
       </div>
       <div class="cardgrid" id="contactGrid"></div>
+    </div>
+
+    <!-- snippets / 複製區 -->
+    <div id="sub-snippets" class="glass panel hidden">
+      <div class="section-title">📋 複製區</div>
+      <div class="section-sub">存放常用文字，下次要用直接按「複製」即可貼上。資料跨裝置同步。</div>
+      <div class="snipadd">
+        <input class="inp" id="snipTitle" placeholder="標題（選填，方便辨識）">
+        <textarea class="inp" id="snipText" placeholder="要存起來的常用文字…"></textarea>
+        <button class="btn" id="addSnip" style="align-self:flex-start">＋ 新增</button>
+      </div>
+      <div class="sniplist" id="snipList"></div>
     </div>
   </section>
 
@@ -491,7 +514,7 @@ const firebaseConfig = {
   appId: "1:970046892491:web:9d5e5a0a14508a3f376e4e"
 };
 const WORKSPACE_ID = 'main';
-const CLOUD_KEYS = ['notes','tasks','contacts','records','sops','sopcats','fanpages'];  // 需雲端同步的資料
+const CLOUD_KEYS = ['notes','tasks','contacts','records','sops','sopcats','fanpages','snippets'];  // 需雲端同步的資料
 let cloud = null;               // 雲端連線 handle；null＝本機模式
 const writeTimers = {};
 
@@ -565,8 +588,9 @@ $('#tabs').addEventListener('click',e=>{
 });
 $$('.subtab').forEach(s=>s.addEventListener('click',()=>{
   $$('.subtab').forEach(x=>x.classList.toggle('active',x===s));
-  ['notes','weekly','contacts'].forEach(v=>$('#sub-'+v).classList.toggle('hidden',v!==s.dataset.sub));
+  ['notes','weekly','contacts','snippets'].forEach(v=>$('#sub-'+v).classList.toggle('hidden',v!==s.dataset.sub));
   if(s.dataset.sub==='weekly') renderWeek();
+  if(s.dataset.sub==='snippets') renderSnippets();
 }));
 
 /* ════════ 1) STICKY NOTES ════════ */
@@ -681,6 +705,48 @@ function editContact(c){
 }
 $('#addContact').onclick=()=>{ const c={id:uid(),dept:'',name:'',ext:'',email:''}; contacts.unshift(c); editContact(c); };
 $('#contactSearch').addEventListener('input',renderContacts);
+
+/* ════════ 4) 複製區 SNIPPETS ════════ */
+let snippets = store.get('snippets',[]);
+function saveSnippets(){ store.set('snippets',snippets); }
+function renderSnippets(){
+  const box=$('#snipList'); if(!box) return; box.innerHTML='';
+  if(!snippets.length){ box.innerHTML='<div style="color:var(--dim);padding:10px">還沒有存任何文字，從上面新增一則吧！</div>'; return; }
+  snippets.forEach(s=>{
+    const el=document.createElement('div'); el.className='snipcard';
+    el.innerHTML=`${s.title?`<div class="sniptitle">${esc(s.title)}</div>`:''}
+      <div class="sniptext">${esc(s.text)}</div>
+      <div class="snipbtns">
+        <button class="btn" data-a="copy" style="flex:1;justify-content:center">📋 複製</button>
+        <button class="btn ghost" data-a="edit" title="編輯">✎</button>
+        <button class="btn ghost" data-a="del" title="刪除">🗑</button>
+      </div>`;
+    el.querySelector('[data-a="copy"]').onclick=()=>copy(s.text);
+    el.querySelector('[data-a="edit"]').onclick=()=>editSnip(s,el);
+    el.querySelector('[data-a="del"]').onclick=()=>{ if(confirm('刪除此文字？')){ snippets=snippets.filter(x=>x!==s); saveSnippets(); renderSnippets(); } };
+    box.appendChild(el);
+  });
+}
+function editSnip(s,el){
+  el.innerHTML=`
+    <input class="inp" data-e="t" value="${esc(s.title||'')}" placeholder="標題（選填）">
+    <textarea class="inp" data-e="c" style="min-height:90px">${esc(s.text)}</textarea>
+    <div class="snipbtns">
+      <button class="btn" data-a="save" style="flex:1;justify-content:center">💾 儲存</button>
+      <button class="btn ghost" data-a="cancel">取消</button>
+    </div>`;
+  el.querySelector('[data-a="save"]').onclick=()=>{
+    s.title=el.querySelector('[data-e="t"]').value.trim(); s.text=el.querySelector('[data-e="c"]').value;
+    saveSnippets(); renderSnippets(); toast('已儲存 ✓');
+  };
+  el.querySelector('[data-a="cancel"]').onclick=()=>renderSnippets();
+}
+$('#addSnip').onclick=()=>{
+  const text=$('#snipText').value; if(!text.trim()){ toast('請先輸入文字'); return; }
+  snippets.unshift({id:uid(), title:$('#snipTitle').value.trim(), text});
+  saveSnippets(); renderSnippets();
+  $('#snipTitle').value=''; $('#snipText').value=''; toast('已新增 ✓');
+};
 
 /* ════════ 5) SOCIAL RECORDS ════════ */
 let records = store.get('records',[]);
@@ -1008,7 +1074,7 @@ $('#sopSearch').addEventListener('input',renderSopList);
 
 /* ════════ 匯出 / 匯入 ════════ */
 $('#btnExport').onclick=()=>{
-  const data={notes,tasks,contacts,records,sops,sopcats:sopCats,_exported:new Date().toISOString()};
+  const data={notes,tasks,contacts,snippets,records,sops,sopcats:sopCats,fanpages,_exported:new Date().toISOString()};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='workstation-backup-'+todayISO()+'.json'; a.click(); URL.revokeObjectURL(a.href); toast('已匯出備份 ✓');
 };
@@ -1016,10 +1082,10 @@ $('#btnImport').onclick=()=>$('#importFile').click();
 $('#importFile').addEventListener('change',e=>{
   const f=e.target.files[0]; if(!f) return; const rd=new FileReader();
   rd.onload=()=>{ try{ const d=JSON.parse(rd.result); if(!confirm('匯入將覆蓋目前所有資料，確定？')) return;
-    notes=d.notes||[]; tasks=d.tasks||{}; contacts=d.contacts||[]; records=d.records||[]; sops=d.sops||[]; sopCats=d.sopcats||[];
-    store.set('notes',notes);store.set('tasks',tasks);store.set('contacts',contacts);store.set('records',records);store.set('sops',sops);store.set('sopcats',sopCats);
+    notes=d.notes||[]; tasks=d.tasks||{}; contacts=d.contacts||[]; snippets=d.snippets||[]; records=d.records||[]; sops=d.sops||[]; sopCats=d.sopcats||[]; if(d.fanpages) fanpages=d.fanpages;
+    store.set('notes',notes);store.set('tasks',tasks);store.set('contacts',contacts);store.set('snippets',snippets);store.set('records',records);store.set('sops',sops);store.set('sopcats',sopCats);store.set('fanpages',fanpages);
     topZ=Math.max(1,...notes.map(n=>n.z||1)); curSop=null;
-    renderNotes();renderWeek();renderContacts();renderStats();renderHist();renderCatChips();renderSopList();renderSopMain();
+    renderNotes();renderWeek();renderContacts();renderSnippets();renderStats();renderHist();renderCatChips();renderSopList();renderSopMain();
     toast('已還原備份 ✓'); }catch(err){ toast('檔案格式錯誤'); } e.target.value=''; };
   rd.readAsText(f);
 });
@@ -1045,6 +1111,7 @@ function applyRemote(k,val){
       renderCatChips(); renderSopList(); renderSopMain(); break;
     case 'sopcats':  sopCats=val||[]; renderCatChips(); renderSopList(); break;
     case 'fanpages': fanpages=val||{}; renderFormContacts(); break;
+    case 'snippets': snippets=val||[]; renderSnippets(); break;
   }
 }
 
@@ -1102,7 +1169,7 @@ $('#btnLock').onclick=()=>{ sessionStorage.removeItem(AUTH_KEY); location.reload
 
 /* ════════ INIT ════════ */
 initRecForm(); updateInline();
-renderNotes(); renderWeek(); renderContacts(); renderStats(); renderHist(); renderCatChips(); renderSopList();
+renderNotes(); renderWeek(); renderContacts(); renderSnippets(); renderStats(); renderHist(); renderCatChips(); renderSopList();
 const savedTab=store.get('ui_tab','main');
 if(savedTab!=='main'){ const b=$(`.tab[data-tab="${savedTab}"]`); if(b) b.click(); }
 if(sessionStorage.getItem(AUTH_KEY)==='1'){ $('#gate').classList.add('hidden'); started=true; startCloud(); }
