@@ -149,6 +149,12 @@ textarea.inp{resize:vertical;min-height:80px;line-height:1.6}
 .ccard .cbtns{display:flex;gap:6px;margin-top:11px}
 .ccard .cbtns button{flex:1;padding:6px;font-size:11.5px;border-radius:6px;background:rgba(255,255,255,.6);border:1px solid var(--border-2);color:var(--muted)}
 .ccard .cbtns button:hover{color:var(--accent-2);border-color:var(--accent)}
+.ccard .cpos{font-size:12px;color:var(--muted);margin-bottom:8px}
+.ccard .cname small{font-size:12px}
+.cgroup{margin-bottom:20px}
+.cgroup-h{font-weight:700;font-size:14px;color:var(--accent-2);margin:2px 2px 11px;display:flex;align-items:center;gap:8px}
+.cgroup-h .n{font-size:11px;color:var(--muted);background:var(--accent-soft);padding:1px 8px;border-radius:20px;font-weight:600}
+.allmail-box{margin-top:10px;font-size:12.5px;color:var(--muted);background:rgba(255,255,255,.55);border:1px solid var(--border-2);border-radius:var(--r-sm);padding:10px 12px;max-height:120px;overflow:auto;word-break:break-all;line-height:1.8;user-select:all}
 
 /* ── DASHBOARD ── */
 .statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
@@ -385,14 +391,24 @@ table.hist td[data-edit]:hover{background:var(--accent-soft)}
     </div>
 
     <!-- contacts -->
-    <div id="sub-contacts" class="glass panel hidden">
-      <div class="section-title">👥 聯絡人</div>
-      <div class="section-sub">卡片式通訊錄，即時搜尋、一鍵複製。</div>
-      <div class="contactbar">
-        <input class="inp search" id="contactSearch" placeholder="🔍 搜尋部門 / 姓名 / 分機 / Email…">
-        <button class="btn" id="addContact">＋ 新增聯絡人</button>
+    <div id="sub-contacts" class="hidden">
+      <div class="glass panel" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div class="section-title" style="font-size:15px">📧 所有業務 Email</div>
+          <span id="allMailCount" style="color:var(--muted);font-size:12px"></span>
+          <button class="btn sm" id="copyAllMail" style="margin-left:auto">📋 複製全部 Email</button>
+        </div>
+        <div class="allmail-box" id="allMailBox"></div>
       </div>
-      <div class="cardgrid" id="contactGrid"></div>
+      <div class="glass panel">
+        <div class="section-title">👥 聯絡人</div>
+        <div class="section-sub">同部門自動排在一起；「複製」只複製 Email。</div>
+        <div class="contactbar">
+          <input class="inp search" id="contactSearch" placeholder="🔍 搜尋 名 / 本名 / 部門 / 職位 / 分機 / Email…">
+          <button class="btn" id="addContact">＋ 新增聯絡人</button>
+        </div>
+        <div id="contactGrid"></div>
+      </div>
     </div>
 
     <!-- snippets / 複製區 -->
@@ -487,6 +503,30 @@ table.hist td[data-edit]:hover{background:var(--accent-soft)}
       </div>
     </div>
   </section>
+</div>
+
+<!-- ══ 聯絡人表單 Modal ══ -->
+<div class="modal-mask" id="contactMask">
+  <div class="modal" style="position:relative">
+    <div class="sophead" style="margin-bottom:10px">
+      <div style="flex:1"><h3 id="cm_title">新增聯絡人</h3></div>
+      <button class="btn ghost sm" id="cm_close">✕</button>
+    </div>
+    <div class="recform" style="grid-template-columns:1fr 1fr;margin-bottom:0">
+      <div class="field"><label>名</label><input class="inp" id="cm_name"></div>
+      <div class="field"><label>本名</label><input class="inp" id="cm_realname"></div>
+      <div class="field"><label>部門</label><input class="inp" id="cm_dept" list="deptList"></div>
+      <div class="field"><label>職位</label><input class="inp" id="cm_position"></div>
+      <div class="field"><label>分機</label><input class="inp" id="cm_ext"></div>
+      <div class="field"><label>Email</label><input class="inp" id="cm_email" type="email"></div>
+      <div class="field wide"><label>業助</label><input class="inp" id="cm_assistant" placeholder="業務助理（選填）"></div>
+    </div>
+    <datalist id="deptList"></datalist>
+    <div class="formfoot" style="margin-top:16px">
+      <button class="btn" id="cm_save">💾 儲存</button>
+      <button class="btn ghost" id="cm_cancel">取消</button>
+    </div>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -681,29 +721,61 @@ if(contacts===null){ contacts=[]; store.set('contacts',contacts); }   // 預設�
 function saveContacts(){ store.set('contacts',contacts); }
 function renderContacts(){
   const q=$('#contactSearch').value.trim().toLowerCase(); const grid=$('#contactGrid'); grid.innerHTML='';
-  const list=contacts.filter(c=>!q||[c.dept,c.name,c.ext,c.email].join(' ').toLowerCase().includes(q));
+  // 「所有業務 Email」區塊（全部聯絡人，不受搜尋影響）
+  const allMails=contacts.map(c=>c.email).filter(Boolean);
+  if($('#allMailBox')) $('#allMailBox').textContent = allMails.join('; ') || '（尚無 Email）';
+  if($('#allMailCount')) $('#allMailCount').textContent = `共 ${allMails.length} 筆`;
+  // 部門下拉建議
+  const depts=[...new Set(contacts.map(c=>c.dept).filter(Boolean))];
+  if($('#deptList')) $('#deptList').innerHTML=depts.map(d=>`<option value="${esc(d)}">`).join('');
+
+  const list=contacts.filter(c=>!q||[c.name,c.realname,c.dept,c.position,c.ext,c.email,c.assistant].join(' ').toLowerCase().includes(q));
   if(!list.length){ grid.innerHTML='<div style="color:var(--dim);padding:20px">找不到聯絡人</div>'; return; }
-  list.forEach(c=>{
-    const el=document.createElement('div'); el.className='ccard';
-    el.innerHTML=`<span class="dept">${esc(c.dept||'—')}</span>
-      <div class="cname">${esc(c.name||'')}</div>
-      <div class="crow">分機 <b>${esc(c.ext||'—')}</b></div>
-      <div class="crow">✉️ <b>${esc(c.email||'')}</b></div>
-      <div class="cbtns"><button data-a="copy">📋 複製</button><button data-a="edit">✎ 編輯</button><button data-a="del">🗑</button></div>`;
-    el.querySelector('[data-a="copy"]').onclick=()=>copy(`${c.name}／${c.dept}／分機 ${c.ext||'—'}／${c.email}`);
-    el.querySelector('[data-a="edit"]').onclick=()=>editContact(c);
-    el.querySelector('[data-a="del"]').onclick=()=>{ if(confirm('刪除此聯絡人？')){ contacts=contacts.filter(x=>x!==c); saveContacts(); renderContacts(); } };
-    grid.appendChild(el);
+  // 同部門排在一起
+  const groups={}; list.forEach(c=>{ const d=c.dept||'未分類'; (groups[d]=groups[d]||[]).push(c); });
+  Object.keys(groups).sort((a,b)=>a.localeCompare(b,'zh-Hant')).forEach(dept=>{
+    const wrap=document.createElement('div'); wrap.className='cgroup';
+    const h=document.createElement('div'); h.className='cgroup-h'; h.innerHTML=`${esc(dept)} <span class="n">${groups[dept].length}</span>`;
+    const cg=document.createElement('div'); cg.className='cardgrid';
+    groups[dept].forEach(c=>{
+      const el=document.createElement('div'); el.className='ccard';
+      el.innerHTML=`
+        <div class="cname">${esc(c.name||'（未命名）')}${c.realname?` <small style="color:var(--muted);font-weight:400">(${esc(c.realname)})</small>`:''}</div>
+        ${c.position?`<div class="cpos">${esc(c.position)}</div>`:''}
+        <div class="crow">分機 <b>${esc(c.ext||'—')}</b></div>
+        <div class="crow">✉️ <b>${esc(c.email||'—')}</b></div>
+        ${c.assistant?`<div class="crow">業助 <b>${esc(c.assistant)}</b></div>`:''}
+        <div class="cbtns"><button data-a="copy">📋 複製 Email</button><button data-a="edit">✎</button><button data-a="del">🗑</button></div>`;
+      el.querySelector('[data-a="copy"]').onclick=()=>{ if(c.email) copy(c.email); else toast('此聯絡人沒有 Email'); };
+      el.querySelector('[data-a="edit"]').onclick=()=>openContactModal(c);
+      el.querySelector('[data-a="del"]').onclick=()=>{ if(confirm('刪除此聯絡人？')){ contacts=contacts.filter(x=>x!==c); saveContacts(); renderContacts(); } };
+      cg.appendChild(el);
+    });
+    wrap.appendChild(h); wrap.appendChild(cg); grid.appendChild(wrap);
   });
 }
-function editContact(c){
-  const name=prompt('姓名',c.name); if(name===null) return;
-  const dept=prompt('部門',c.dept)??c.dept;
-  const ext=prompt('分機',c.ext)??c.ext;
-  const email=prompt('Email',c.email)??c.email;
-  Object.assign(c,{name,dept,ext,email}); saveContacts(); renderContacts();
+let editingContact=null;
+function openContactModal(c){
+  editingContact=c||null;
+  $('#cm_title').textContent=c?'編輯聯絡人':'新增聯絡人';
+  $('#cm_name').value=c?.name||''; $('#cm_realname').value=c?.realname||''; $('#cm_dept').value=c?.dept||'';
+  $('#cm_position').value=c?.position||''; $('#cm_ext').value=c?.ext||''; $('#cm_email').value=c?.email||''; $('#cm_assistant').value=c?.assistant||'';
+  const depts=[...new Set(contacts.map(x=>x.dept).filter(Boolean))]; $('#deptList').innerHTML=depts.map(d=>`<option value="${esc(d)}">`).join('');
+  $('#contactMask').classList.add('show'); setTimeout(()=>$('#cm_name').focus(),60);
 }
-$('#addContact').onclick=()=>{ const c={id:uid(),dept:'',name:'',ext:'',email:''}; contacts.unshift(c); editContact(c); };
+function closeContactModal(){ $('#contactMask').classList.remove('show'); editingContact=null; }
+$('#cm_save').onclick=()=>{
+  const data={ name:$('#cm_name').value.trim(), realname:$('#cm_realname').value.trim(), dept:$('#cm_dept').value.trim(),
+    position:$('#cm_position').value.trim(), ext:$('#cm_ext').value.trim(), email:$('#cm_email').value.trim(), assistant:$('#cm_assistant').value.trim() };
+  if(!data.name && !data.email){ toast('請至少填「名」或「Email」'); return; }
+  if(editingContact) Object.assign(editingContact,data);
+  else contacts.unshift({id:uid(),...data});
+  saveContacts(); renderContacts(); closeContactModal(); toast('已儲存 ✓');
+};
+$('#cm_close').onclick=closeContactModal; $('#cm_cancel').onclick=closeContactModal;
+$('#contactMask').addEventListener('click',e=>{ if(e.target===$('#contactMask')) closeContactModal(); });
+$('#addContact').onclick=()=>openContactModal(null);
+$('#copyAllMail').onclick=()=>{ const m=contacts.map(c=>c.email).filter(Boolean); if(!m.length){ toast('目前沒有 Email'); return; } copy(m.join('; ')); };
 $('#contactSearch').addEventListener('input',renderContacts);
 
 /* ════════ 4) 複製區 SNIPPETS ════════ */
