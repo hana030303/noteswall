@@ -322,8 +322,9 @@ table.hist td[data-edit]:hover{background:var(--accent-soft)}
   #syncStatus{order:2}
   .navtoggle{order:3}
   .tabs{order:4;width:100%;margin-left:0}
-  #btnExport{order:5}#btnImport{order:6}#btnLock{order:7}
+  #btnPromo{order:5}#btnExport{order:5}#btnImport{order:6}#btnLock{order:7}
   .nav:not(.open) .tabs,
+  .nav:not(.open) #btnPromo,
   .nav:not(.open) #btnExport,
   .nav:not(.open) #btnImport,
   .nav:not(.open) #btnLock{display:none}
@@ -362,6 +363,7 @@ table.hist td[data-edit]:hover{background:var(--accent-soft)}
         <button class="tab" data-tab="sop"><span class="em">📚</span>SOP 知識庫</button>
       </nav>
       <div class="status local" id="syncStatus"><span class="led"></span><span id="syncTxt">連線中…</span></div>
+      <a class="toolbtn" id="btnPromo" href="promo.html" title="優惠案管理器" style="text-decoration:none">🏷️ 優惠案</a>
       <button class="toolbtn" id="btnExport" title="匯出備份">⬇︎ 備份</button>
       <button class="toolbtn" id="btnImport" title="匯入備份">⬆︎ 還原</button>
       <button class="toolbtn" id="btnLock" title="鎖定">🔒</button>
