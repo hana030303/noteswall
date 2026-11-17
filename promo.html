@@ -93,11 +93,9 @@ textarea.inp{resize:vertical;line-height:1.6;font-size:13px}
 .grp.closed .ghead .chev{transform:rotate(-90deg)}
 .ghead h3{font-size:15.5px}
 .ghead .gmeta{font-size:12px;color:var(--muted)}
-.ghead .gsale{margin-left:auto;font-size:12px;color:#17805a;background:var(--ok-soft);padding:4px 11px;border-radius:999px;white-space:nowrap}
-.ghead .gsale.none{color:var(--dim);background:rgba(150,160,190,.12)}
 .grp.closed .gbody{display:none}
 .gbody{border-top:1px solid var(--border-2)}
-.prow{display:grid;grid-template-columns:22px minmax(200px,2fr) 110px 90px 70px 80px minmax(150px,1.1fr);gap:12px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border-2);font-size:13.5px;cursor:pointer;transition:background .15s}
+.prow{display:grid;grid-template-columns:22px minmax(200px,2fr) 110px 90px 70px 80px;gap:12px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border-2);font-size:13.5px;cursor:pointer;transition:background .15s}
 .prow:last-child{border-bottom:none}
 .prow:not(.head):hover{background:rgba(255,255,255,.5)}
 .prow.head{font-size:11.5px;color:var(--muted);padding:7px 16px;cursor:default}
@@ -105,8 +103,6 @@ textarea.inp{resize:vertical;line-height:1.6;font-size:13px}
 .prow .r{text-align:right}
 .prow .pn{font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .prow .pp{font-weight:700;font-size:15px}
-.prow .ps{font-size:12px;color:#17805a}
-.prow .ps.none{color:var(--dim)}
 .tag{display:inline-block;font-size:11px;font-weight:400;padding:2px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent-2);white-space:nowrap}
 .tag.t-影音{background:rgba(229,72,150,.12);color:#c2317a}
 .tag.t-社群議題{background:var(--ok-soft);color:#17805a}
@@ -123,37 +119,6 @@ textarea.inp{resize:vertical;line-height:1.6;font-size:13px}
 .empty{text-align:center;color:var(--muted);padding:48px 20px}
 .empty .big{font-size:34px;margin-bottom:8px}
 
-/* sales section */
-.sec-title{display:flex;align-items:baseline;gap:10px;margin:28px 4px 12px}
-.sec-title h2{font-size:17px}
-.sec-title span{font-size:12px;color:var(--muted)}
-.sales{padding:8px 16px}
-.srow{display:grid;grid-template-columns:minmax(180px,1.6fr) 60px 110px 110px 90px 1.4fr;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border-2);font-size:13px}
-.srow:last-child{border-bottom:none}
-.srow.head{font-size:11.5px;color:var(--muted);padding:8px 0}
-.srow .r{text-align:right}
-.dl{display:inline-block;margin-left:5px;font-size:11px;font-weight:600;font-family:'Space Grotesk';white-space:nowrap}
-.dl.up{color:#17805a}.dl.down{color:var(--danger)}
-.sec-title{flex-wrap:wrap}
-.srow.camp-row{font-weight:700;font-size:13.5px;background:rgba(255,255,255,.45);margin:0 -16px;padding:10px 16px;border-top:1px solid var(--border-2)}
-.srow.camp-row .sub{font-weight:400;display:inline}
-.srow.sub-row .nm{padding-left:26px}
-.srow.camp-row{cursor:pointer;user-select:none}
-.srow.camp-row:hover{background:rgba(255,255,255,.7)}
-.srow.camp-row .chev{display:inline-block;width:18px;font-size:10px;color:var(--muted);transition:transform .25s var(--ease)}
-.sgrp.closed .camp-row .chev{transform:rotate(-90deg)}
-.sgrp.closed .sbody{display:none}
-.sgrp.closed .camp-row{border-bottom:none}
-.srow .nm{cursor:pointer}
-.srow .nm:hover{color:var(--accent-2)}
-.srow .sub{font-size:11px;color:var(--dim)}
-.track{height:8px;border-radius:8px;background:rgba(150,160,190,.18);overflow:hidden}
-.track i{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,var(--accent),#7d5bd9)}
-.unm{padding:14px 16px;margin-top:12px;border:1px dashed rgba(224,160,32,.6)}
-.unm h4{font-size:13.5px;margin-bottom:8px;color:#9a6b00}
-.unm .u{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:6px 0;font-size:12.5px}
-.unm .u .n{flex:1 1 260px}
-.unm select{padding:6px 8px;border-radius:8px;border:1px solid var(--border-2);background:#fff;font-size:12.5px;max-width:260px}
 
 /* compare bar */
 #cmpBar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(120px);z-index:40;display:flex;align-items:center;gap:12px;
@@ -224,14 +189,10 @@ textarea.inp{resize:vertical;line-height:1.6;font-size:13px}
 
 @media(max-width:820px){
   .camp .rules{columns:1}
-  .srow{grid-template-columns:1fr 50px 100px;row-gap:4px}
-  .srow .c-dig,.srow .c-cost,.srow.head .c-bar{display:none}
-  .srow .c-bar{grid-column:1/-1}
   .row2,.row3{grid-template-columns:1fr}
   .prow{grid-template-columns:22px 1fr 96px;row-gap:2px}
-  .prow .c-mv,.prow .c-disc,.prow .c-imp,.prow.head .c-sale{display:none}
-  .prow .c-sale{grid-column:2/-1;text-align:left}
-  .ghead{flex-wrap:wrap}.ghead .gsale{margin-left:34px}
+  .prow .c-mv,.prow .c-disc,.prow .c-imp{display:none}
+  .ghead{flex-wrap:wrap}
   .logo small{display:none}
 }
 </style>
@@ -254,7 +215,6 @@ textarea.inp{resize:vertical;line-height:1.6;font-size:13px}
     <div class="nav glass">
       <div class="logo"><div class="mark">🏷️</div><div>優惠案管理器<small>PROMO MANAGER</small></div></div>
       <div class="status local" id="syncStatus"><span class="led"></span><span id="syncTxt">連線中…</span></div>
-      <button class="toolbtn" id="btnSales">📈 匯入業績 CSV</button>
       <button class="toolbtn" id="btnImport">⬆︎ 匯入方案 JSON</button>
       <button class="toolbtn" id="btnExport">⬇︎ 匯出</button>
       <a class="toolbtn" href="workstation.html">↩ 工作站</a>
@@ -273,14 +233,12 @@ textarea.inp{resize:vertical;line-height:1.6;font-size:13px}
       <option value="disc">折數 低→高</option>
       <option value="imp">曝光數 高→低</option>
       <option value="cp">每萬元曝光 高→低</option>
-      <option value="sales">成交預算 高→低</option>
     </select>
   </div>
 
   <div id="campBox"></div>
   <div id="grid"></div>
 
-  <div id="salesBox"></div>
 </div>
 
 <div id="cmpBar">
@@ -290,7 +248,6 @@ textarea.inp{resize:vertical;line-height:1.6;font-size:13px}
 </div>
 
 <div class="modal-mask" id="mask"><div class="modal" id="modal"></div></div>
-<input type="file" id="fileSales" accept=".csv,text/csv" class="hidden">
 <input type="file" id="fileJson" accept=".json,application/json" class="hidden">
 <div id="toast"></div>
 
@@ -298,7 +255,7 @@ textarea.inp{resize:vertical;line-height:1.6;font-size:13px}
 /* ══════════════════════════════════════════════════════════════
    優惠案管理器 — 單檔前端
    資料：LocalStorage + Firestore（與工作站同一專案、同一 workspace，key 不同）
-   方案與業績資料只存在本機／雲端，不寫進這個公開檔案。
+   方案資料只存在本機／雲端，不寫進這個公開檔案。
    ══════════════════════════════════════════════════════════════ */
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -314,7 +271,7 @@ const firebaseConfig = {
   appId: "1:970046892491:web:9d5e5a0a14508a3f376e4e"
 };
 const WORKSPACE_ID = 'main';
-const CLOUD_KEYS = ['promos','promoSales'];
+const CLOUD_KEYS = ['promos'];
 let cloud = null; const writeTimers = {};
 
 const store = {
@@ -330,12 +287,10 @@ function setSync(cls,txt){ $('#syncStatus').className='status '+cls; $('#syncTxt
 
 /* ════════ 資料 ════════ */
 let campaigns = store.get('promos', []);                     // [{id,name,subtitle,year,start,end,deadline,rules,plans:[…]}]
-let sales     = store.get('promoSales', {rows:[],map:{}});   // {importedAt,fileName,rows:[{name,center,orders,budget,print,digital,cost}],map:{專案名稱:planId|'ignore'}}
 const TYPES = ['影音','社群議題','蓋版廣告','其他'];
-const ui = { q:'', camp:'all', type:'all', sort:'default', picked:[], closed:store.get('promo_closed',[]), sClosed:store.get('promo_sclosed',[]) };
+const ui = { q:'', camp:'all', type:'all', sort:'default', picked:[], closed:store.get('promo_closed',[]) };
 
 const saveCamps = () => store.set('promos', campaigns);
-const saveSales = () => store.set('promoSales', sales);
 
 const money = n => '$'+Math.round(n||0).toLocaleString('en-US');
 const wan   = n => { const v=(n||0)/10000; return (Number.isInteger(v)?v:v.toFixed(1))+'萬'; };
@@ -358,57 +313,18 @@ const cpOf   = p => p.price>0 ? impOf(p)/(p.price/10000) : 0;            // 每�
 const allPlans = () => campaigns.flatMap(c => (c.plans||[]).map(p => ({p, c})));
 const findPlan = id => allPlans().find(x=>x.p.id===id);
 
-/* ── 業績對應：把內部系統的「專案名稱」對到方案 ── */
 const squash  = s => String(s||'').replace(/\s+/g,'').toLowerCase();
-const noParen = s => squash(s).replace(/[（(][^（()）]*[)）]/g,'');
-function matchRow(name){
-  if(sales.map && sales.map[name]) return sales.map[name]==='ignore' ? null : (findPlan(sales.map[name]) ? sales.map[name] : null);
-  const raw = squash(name);
-  // 先找檔期（專案名稱含檔期名），再比對方案名
-  let pool = allPlans(), rest = raw;
-  const c = campaigns.filter(c=>c.name && raw.includes(squash(c.name))).sort((a,b)=>b.name.length-a.name.length)[0];
-  if(c){ pool = pool.filter(x=>x.c.id===c.id); rest = raw.slice(raw.indexOf(squash(c.name))+squash(c.name).length); }
-  // 1) 只去掉結尾的價格「(16萬)」後完全相同 → 可區分「(圖)」「(影)」這類同名方案
-  const full = rest.replace(/[（(][\d.]+萬[)）]$/,'');
-  const strict = pool.find(x=>squash(x.p.name)===full);
-  if(strict) return strict.p.id;
-  // 2) 去掉所有括號後相同；若有多個同名候選就不猜，留給使用者指派
-  const key = noParen(rest);
-  if(!key) return null;
-  const same = pool.filter(x=>noParen(x.p.name)===key);
-  if(same.length===1) return same[0].p.id;
-  if(same.length>1) return null;
-  const loose = pool.filter(x=>{ const n=noParen(x.p.name); return n && (key.endsWith(n)||n.endsWith(key)); })
-                    .sort((a,b)=>noParen(b.p.name).length-noParen(a.p.name).length)[0];
-  return loose ? loose.p.id : null;
-}
-const salesIndex = () => indexRows(sales.rows);
-/* 歷史紀錄：每次匯入前的那份業績會存進 sales.history，用來算「較上次」的增減 */
-const baseSnap  = () => { const h=sales.history||[]; return h.find(x=>x.ts===ui.baseTs) || h[h.length-1] || null; };
-const baseIndex = () => { const b=baseSnap(); return b ? indexRows(b.rows).by : null; };
-const dl = (n,fmt) => !n ? '' : `<span class="dl ${n>0?'up':'down'}">${n>0?'▲':'▼'}${fmt?fmt(Math.abs(n)):Math.abs(n)}</span>`;
-const fmtFull = ts => { const d=new Date(ts), p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`; };
-function indexRows(rows){
-  const by = {}, unmatched = [];
-  for(const r of (rows||[])){
-    const id = matchRow(r.name);
-    if(!id){ if(!(sales.map && sales.map[r.name]==='ignore')) unmatched.push(r); continue; }
-    const a = by[id] || (by[id]={orders:0,budget:0,print:0,digital:0,cost:0,centers:[]});
-    a.orders+=r.orders; a.budget+=r.budget; a.print+=r.print; a.digital+=r.digital; a.cost+=r.cost; a.centers.push(r);
-  }
-  return {by, unmatched};
-}
 
 /* ════════ 繪製 ════════ */
 function visiblePlans(){
-  const q = squash(ui.q), {by} = salesIndex();
+  const q = squash(ui.q);
   let list = allPlans().filter(({p,c}) =>
     (ui.camp==='all' || c.id===ui.camp) &&
     (ui.type==='all' || p.type===ui.type) &&
     (!q || squash([p.name,p.type,c.name,p.content,p.fees,p.notes,wan(p.price)].join(' ')).includes(q)));
   const f = { price:(a,b)=>a.p.price-b.p.price, priceD:(a,b)=>b.p.price-a.p.price, mv:(a,b)=>(b.p.mediaValue||0)-(a.p.mediaValue||0),
               disc:(a,b)=>(discOf(a.p)??9)-(discOf(b.p)??9), imp:(a,b)=>impOf(b.p)-impOf(a.p), cp:(a,b)=>cpOf(b.p)-cpOf(a.p),
-              sales:(a,b)=>((by[b.p.id]||{}).budget||0)-((by[a.p.id]||{}).budget||0) }[ui.sort];
+            }[ui.sort];
   if(f) list = [...list].sort(f);
   return list;
 }
@@ -421,7 +337,6 @@ function renderFilters(){
   $('#typeChips').innerHTML = ['all',...used].map(t=>`<button class="chip ${ui.type===t?'active':''}" data-type="${esc(t)}">${t==='all'?'全部':esc(t)}</button>`).join('');
 }
 
-const fmtTime = ts => { const d=new Date(ts), p=n=>String(n).padStart(2,'0'); return `${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`; };
 
 function renderCamp(){
   const c = campaigns.find(c=>c.id===ui.camp);
@@ -436,7 +351,7 @@ function renderCamp(){
 }
 
 function renderGrid(){
-  const list = visiblePlans(), {by} = salesIndex(), bb = baseIndex();
+  const list = visiblePlans();
   if(!campaigns.length){
     $('#grid').innerHTML = '<div class="empty glass"><div class="big">🏷️</div>還沒有任何優惠案。<br>按右上角「匯入方案 JSON」載入整理好的檔期資料，或從檔期選單選「＋ 新增檔期」手動建立。</div>'; return;
   }
@@ -444,16 +359,15 @@ function renderGrid(){
   // 依檔期分組（組內維持目前排序），點標題列可折疊
   const groups = []; for(const x of list){ let g=groups.find(g=>g.c.id===x.c.id); if(!g) groups.push(g={c:x.c,items:[]}); g.items.push(x); }
   $('#grid').innerHTML = groups.map(({c,items})=>{
-    let o=0,b=0; items.forEach(({p})=>{ const s=by[p.id]; if(s){ o+=s.orders; b+=s.budget; } });
     const pr = items.map(x=>x.p.price).filter(Boolean), lo=Math.min(...pr), hi=Math.max(...pr);
     return `<div class="grp glass ${ui.closed.includes(c.id)?'closed':''}">
       <div class="ghead" data-toggle="${esc(c.id)}"><span class="chev">▼</span>
         <div><h3 class="display">${esc((c.year?c.year+' ':'')+c.name)}</h3>
           <div class="gmeta">${items.length} 個方案${pr.length?' ・ '+(lo===hi?wan(lo):wan(lo)+' – '+wan(hi)):''}${c.start?' ・ '+esc(c.start)+' ~ '+esc(c.end||''):''}</div></div>
-        <span class="gsale ${o?'':'none'}">${o?('已售 '+o+' 單 ・ '+money(b)):(sales.importedAt?'尚無成交':'未匯入業績')}</span></div>
+        </div>
       <div class="gbody">
-        <div class="prow head"><span></span><span>方案</span><span class="r">價格</span><span class="r c-mv">媒體價值</span><span class="r c-disc">折數</span><span class="r c-imp">廣告曝光</span><span class="r c-sale">銷售</span></div>
-        ${items.map(({p})=>{ const s=by[p.id], d=discOf(p), imp=impOf(p);
+        <div class="prow head"><span></span><span>方案</span><span class="r">價格</span><span class="r c-mv">媒體價值</span><span class="r c-disc">折數</span><span class="r c-imp">廣告曝光</span></div>
+        ${items.map(({p})=>{ const d=discOf(p), imp=impOf(p);
           return `<div class="prow ${ui.picked.includes(p.id)?'sel':''}" data-id="${esc(p.id)}">
             <button class="pick" data-pick="${esc(p.id)}" title="加入比對">✓</button>
             <div class="pn">${esc(p.name)} <span class="tag t-${esc(p.type)}">${esc(p.type||'其他')}</span></div>
@@ -461,50 +375,9 @@ function renderGrid(){
             <div class="r num c-mv">${p.mediaValue?wan(p.mediaValue):'—'}</div>
             <div class="r num c-disc">${d!=null?(d*10).toFixed(1)+' 折':'—'}</div>
             <div class="r num c-imp">${imp?imp+'萬':'—'}</div>
-            <div class="r c-sale ps ${s?'':'none'}">${s?('<b class="num">'+s.orders+'</b> 單'+(bb?dl(s.orders-((bb[p.id]||{}).orders||0)):'')+' ・ <b class="num">'+money(s.budget)+'</b>'):'—'}</div>
           </div>`; }).join('')}
       </div></div>`;
   }).join('');
-}
-
-function renderSales(){
-  const {by, unmatched} = salesIndex();
-  if(!sales.importedAt){ $('#salesBox').innerHTML=''; return; }
-  const rows = visiblePlans().map(x=>({...x, s:by[x.p.id]})).filter(x=>x.s).sort((a,b)=>b.s.budget-a.s.budget);
-  const max = Math.max(1,...rows.map(x=>x.s.budget));
-  const base = baseSnap(), bb = base ? indexRows(base.rows).by : null;
-  const dOf = (id,k) => bb ? (by[id]||{})[k] - ((bb[id]||{})[k]||0) : 0;
-  let cmpTxt = '';
-  if(bb){ const ids=new Set([...Object.keys(by),...Object.keys(bb)]); let dO=0,dB=0;
-    ids.forEach(id=>{ dO+=((by[id]||{}).orders||0)-((bb[id]||{}).orders||0); dB+=((by[id]||{}).budget||0)-((bb[id]||{}).budget||0); });
-    cmpTxt = ` ・ 較 ${fmtTime(base.ts)} 匯入：` + ((dO||dB) ? `訂單 ${dl(dO)||'持平'}　預算 ${dl(dB,money)||'持平'}` : '無變化'); }
-  const nHist = (sales.history||[]).length;
-  let html = `<div class="sec-title"><h2 class="display">銷售概況</h2><span>來源：${esc(sales.fileName||'CSV')} ・ 更新於 ${fmtTime(sales.importedAt)}${cmpTxt}</span>
-    <button class="btn sm ghost" data-act="history" style="margin-left:auto">匯入紀錄${nHist?` (${nHist+1})`:''}</button></div>`;
-  html += `<div class="sales glass"><div class="srow head"><div>方案</div><div class="r">訂單</div><div class="r">預算</div><div class="r c-dig">數位業績</div><div class="r c-cost">費用</div><div class="c-bar"></div></div>`;
-  // 依檔期分組：每組一列檔期小計，底下才是各方案
-  const sg = []; for(const x of rows){ let g=sg.find(g=>g.c.id===x.c.id); if(!g) sg.push(g={c:x.c,items:[]}); g.items.push(x); }
-  const sum = (items,k) => items.reduce((a,x)=>a+x.s[k],0);
-  html += rows.length ? sg.map(({c,items})=>`<div class="sgrp ${ui.sClosed.includes(c.id)?'closed':''}"><div class="srow camp-row" data-stoggle="${esc(c.id)}">
-      <div><span class="chev">▼</span>${esc((c.year?c.year+' ':'')+c.name)}<span class="sub" style="margin-left:8px">${items.length} 個方案有成交</span></div>
-      <div class="r num">${sum(items,'orders')}</div><div class="r num">${money(sum(items,'budget'))}</div>
-      <div class="r num c-dig">${money(sum(items,'digital'))}</div><div class="r num c-cost">${money(sum(items,'cost'))}</div><div class="c-bar"></div></div><div class="sbody">` +
-    items.map(({p,c,s})=>`<div class="srow sub-row">
-      <div class="nm" data-open="${esc(p.id)}">${esc(p.name)}<div class="sub">${esc([...new Set(s.centers.map(r=>r.center))].join('、'))}</div></div>
-      <div class="r num">${s.orders}${dl(dOf(p.id,'orders'))}</div><div class="r num">${money(s.budget)}${(d=>d?`<div>${dl(d,money)}</div>`:'')(dOf(p.id,'budget'))}</div>
-      <div class="r num c-dig">${money(s.digital)}</div><div class="r num c-cost">${money(s.cost)}</div>
-      <div class="c-bar"><div class="track"><i style="width:${(s.budget/max*100).toFixed(1)}%"></i></div></div></div>`).join('') + `</div></div>`).join('')
-    : `<div class="empty" style="padding:24px">目前篩選範圍內沒有成交資料</div>`;
-  html += `</div>`;
-  if(unmatched.length){
-    const opts = allPlans().map(({p,c})=>`<option value="${esc(p.id)}">${esc(c.name+'｜'+p.name)}</option>`).join('');
-    const names = [...new Set(unmatched.map(r=>r.name))];
-    html += `<div class="unm glass"><h4>⚠️ ${names.length} 個專案名稱對不到方案（未計入上方統計）</h4>` + names.map(n=>{
-      const rs = unmatched.filter(r=>r.name===n), o=rs.reduce((a,r)=>a+r.orders,0), b=rs.reduce((a,r)=>a+r.budget,0);
-      return `<div class="u"><div class="n">${esc(n)} <span style="color:var(--dim)">・ ${o} 單 ・ ${money(b)}</span></div>
-        <select data-map="${esc(n)}"><option value="">指派到方案…</option><option value="__new">＋ 新增至專案（建立為新方案）</option>${opts}<option value="ignore">不列入（忽略）</option></select></div>`; }).join('') + `</div>`;
-  }
-  $('#salesBox').innerHTML = html;
 }
 
 function renderCmpBar(){
@@ -515,7 +388,7 @@ function renderCmpBar(){
   $('#cmpGo').textContent = ui.picked.length<2 ? '再選 1 個即可比對' : `並排比對 (${ui.picked.length})`;
   $('#cmpGo').style.opacity = ui.picked.length<2 ? .5 : 1;
 }
-function renderAll(){ renderFilters(); renderCamp(); renderGrid(); renderSales(); renderCmpBar(); }
+function renderAll(){ renderFilters(); renderCamp(); renderGrid(); renderCmpBar(); }
 
 /* ════════ Modal ════════ */
 function openModal(html, wide){ const m=$('#modal'); m.className='modal'+(wide?' wide':''); m.innerHTML=`<button class="close" data-close>✕</button>`+html; $('#mask').classList.add('show'); m.scrollTop=0; }
@@ -550,7 +423,7 @@ const secHTML = p => { const secs=parseContent(p.content); if(!secs.length) retu
 
 function openDetail(id){
   const x = findPlan(id); if(!x) return; const {p,c} = x;
-  const s = salesIndex().by[id], d = discOf(p), imp = impOf(p), fees = parseFees(p.fees), notes = lines(p.notes);
+  const d = discOf(p), imp = impOf(p), fees = parseFees(p.fees), notes = lines(p.notes);
   openModal(`
     <div class="cname" style="font-size:12px;color:var(--dim)">${esc((c.year?c.year+' ':'')+c.name)}</div>
     <h3 class="display">${esc(p.name)} <span class="tag t-${esc(p.type)}" style="vertical-align:3px">${esc(p.type||'其他')}</span></h3>
@@ -564,15 +437,6 @@ function openDetail(id){
     <div class="dsec"><h4>方案內容</h4>${secHTML(p)||'<span style="color:var(--dim)">（未填）</span>'}</div>
     ${fees.length?`<div class="dsec"><h4>費用項目</h4><table class="mini"><tbody>${fees.map(f=>`<tr><td>${esc(f.label)}</td><td class="num">${f.amount?money(f.amount):''}</td></tr>`).join('')}
       <tr><td><b>合計</b></td><td class="num"><b>${money(fees.reduce((a,f)=>a+f.amount,0))}</b></td></tr></tbody></table></div>`:''}
-    <div class="dsec"><h4>銷售狀況${sales.importedAt?`（更新於 ${fmtTime(sales.importedAt)}）`:''}</h4>
-      ${s?`<table class="mini"><thead><tr><th>中心別</th><th>訂單</th><th>預算</th><th>平面業績</th><th>數位業績</th><th>費用</th></tr></thead><tbody>
-        ${s.centers.map(r=>`<tr><td>${esc(r.center)}</td><td class="num">${r.orders}</td><td class="num">${money(r.budget)}</td><td class="num">${money(r.print)}</td><td class="num">${money(r.digital)}</td><td class="num">${money(r.cost)}</td></tr>`).join('')}
-        <tr><td><b>合計</b></td><td class="num"><b>${s.orders}</b></td><td class="num"><b>${money(s.budget)}</b></td><td class="num"><b>${money(s.print)}</b></td><td class="num"><b>${money(s.digital)}</b></td><td class="num"><b>${money(s.cost)}</b></td></tr></tbody></table>`
-        :`<span style="color:var(--dim);font-size:13px">${sales.importedAt?'這個方案目前沒有成交紀錄':'尚未匯入業績 CSV'}</span>`}
-      ${(()=>{ const h=sales.history||[]; if(!h.length) return '';
-        const snaps=[...h,{ts:sales.importedAt,rows:sales.rows}].map(x=>({ts:x.ts,s:indexRows(x.rows).by[id]||{orders:0,budget:0}}));
-        return `<div class="lab" style="margin-top:12px">歷次匯入</div><table class="mini"><thead><tr><th>匯入時間</th><th>訂單</th><th>預算</th></tr></thead><tbody>` +
-          snaps.map((x,i)=>{ const pv=i?snaps[i-1].s:null; return `<tr><td>${fmtFull(x.ts)}</td><td class="num">${x.s.orders}${pv?dl(x.s.orders-pv.orders):''}</td><td class="num">${money(x.s.budget)}${pv?dl(x.s.budget-pv.budget,money):''}</td></tr>`; }).reverse().join('') + `</tbody></table>`; })()}</div>
     ${notes.length?`<div class="dsec"><h4>備註與規範</h4><ul class="notes">${notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul></div>`:''}
     <div class="foot">
       <button class="btn sm danger" data-act="delPlan" data-id="${esc(id)}" style="margin-right:auto">刪除</button>
@@ -591,7 +455,6 @@ function planText(p,c){
 /* ── 並排比對 ── */
 function openCompare(){
   const xs = ui.picked.map(findPlan).filter(Boolean); if(xs.length<2){ toast('請至少選 2 個方案'); return; }
-  const {by} = salesIndex();
   const best = (vals, dir) => { const v = vals.filter(n=>n!=null && n>0); if(v.length<2) return null; const t = dir>0?Math.max(...v):Math.min(...v); return v.every(n=>n===t)?null:t; };
   const numRow = (label, vals, fmt, dir) => { const b = dir?best(vals,dir):null;
     return `<tr><td class="rk">${label}</td>${vals.map(v=>`<td class="n ${b!=null&&v===b?'best':''}">${v==null||(!v&&dir)?'—':fmt(v)}</td>`).join('')}</tr>`; };
@@ -608,9 +471,6 @@ function openCompare(){
       ${numRow('每萬元曝光', xs.map(x=>impOf(x.p)?+cpOf(x.p).toFixed(1):null), v=>v+' 萬次', 1)}
       <tr><td class="rk">方案內容</td>${xs.map(x=>`<td>${contentCell(x)}</td>`).join('')}</tr>
       <tr><td class="rk">費用項目</td>${xs.map(({p})=>{ const f=parseFees(p.fees); return `<td>${f.length?f.map(i=>`${esc(i.label)} <span class="num">${i.amount?money(i.amount):''}</span>`).join('<br>'):'—'}</td>`; }).join('')}</tr>
-      ${numRow('已售訂單', xs.map(x=>(by[x.p.id]||{}).orders||0), v=>v+' 單', 1)}
-      ${numRow('成交預算', xs.map(x=>(by[x.p.id]||{}).budget||0), money, 1)}
-      ${numRow('數位業績', xs.map(x=>(by[x.p.id]||{}).digital||0), money, 1)}
       <tr><td class="rk">備註</td>${xs.map(({p})=>`<td><ul class="notes" style="font-size:12px;color:var(--muted)">${lines(p.notes).map(n=>`<li>${esc(n)}</li>`).join('')||'—'}</ul></td>`).join('')}</tr>
     </tbody></table></div>
     <div class="legend"><i style="background:var(--ok-soft)"></i>★ 該列最優　<i style="background:var(--warn-soft)"></i>只有這個方案才有的項目</div>`, true);
@@ -654,7 +514,7 @@ function openCampForm(id){
     <div class="row2"><div class="field"><label>檔期名稱</label><input class="inp" id="c_name" value="${esc(c.name||'')}" placeholder="開學季一應(11)俱全"></div>
       <div class="field"><label>年度</label><input class="inp" id="c_year" value="${esc(c.year||new Date().getFullYear())}"></div></div>
     <div class="field"><label>副標</label><input class="inp" id="c_sub" value="${esc(c.subtitle||'')}">
-      <div class="hint">檔期名稱要和內部系統「專案名稱」裡的寫法一致，業績才能自動對應。</div></div>
+</div>
     <div class="row3"><div class="field"><label>推案開始</label><input class="inp" type="date" id="c_start" value="${esc(c.start||'')}"></div>
       <div class="field"><label>推案結束</label><input class="inp" type="date" id="c_end" value="${esc(c.end||'')}"></div>
       <div class="field"><label>刊登截止</label><input class="inp" type="date" id="c_dead" value="${esc(c.deadline||'')}"></div></div>
@@ -670,53 +530,6 @@ function saveCamp(id){
 }
 
 /* ════════ 匯入／匯出 ════════ */
-function parseCSV(t){
-  const rows=[]; let r=[],f='',q=false;
-  for(let i=0;i<t.length;i++){ const c=t[i];
-    if(q){ if(c==='"'){ if(t[i+1]==='"'){ f+='"'; i++; } else q=false; } else f+=c; }
-    else if(c==='"') q=true; else if(c===','){ r.push(f); f=''; }
-    else if(c==='\n'){ r.push(f); rows.push(r); r=[]; f=''; } else if(c!=='\r') f+=c; }
-  if(f||r.length){ r.push(f); rows.push(r); }
-  return rows.filter(r=>r.some(c=>c.trim()));
-}
-function importSalesText(text, fileName){
-  const rows = parseCSV(text.replace(/^﻿/,'')); if(rows.length<2){ toast('CSV 沒有資料'); return false; }
-  const head = rows[0].map(h=>h.trim()), col = k => head.findIndex(h=>h.includes(k));
-  const ix = {name:col('專案名稱'), center:col('中心'), orders:col('訂單'), budget:col('預算'), print:col('平面'), digital:col('數位'), cost:col('費用')};
-  if(ix.name<0){ toast('找不到「專案名稱」欄位，請確認是專案成效統計的匯出檔'); return false; }
-  const num = v => parseFloat(String(v==null?'':v).replace(/[^\d.\-]/g,''))||0, g=(r,i)=>i<0?'':(r[i]||'').trim();
-  const out = rows.slice(1).map(r=>({name:g(r,ix.name),center:g(r,ix.center),orders:num(g(r,ix.orders)),budget:num(g(r,ix.budget)),print:num(g(r,ix.print)),digital:num(g(r,ix.digital)),cost:num(g(r,ix.cost))})).filter(r=>r.name);
-  // 上一份業績存進歷史（內容完全相同就不重複存），最多保留 40 份
-  const same = !!sales.importedAt && JSON.stringify(out)===JSON.stringify(sales.rows||[]);
-  const history = (sales.history||[]).slice();
-  if(sales.importedAt && !same) history.push({ts:sales.importedAt, fileName:sales.fileName||'', rows:sales.rows||[]});
-  sales = {importedAt:Date.now(), fileName:fileName||'', rows:out, map:sales.map||{}, history:history.slice(-40)};
-  ui.baseTs = null;
-  saveSales(); renderAll();
-  const un = new Set(salesIndex().unmatched.map(r=>r.name)).size;
-  toast(same ? '內容與上次相同，只更新了時間' : `已匯入 ${out.length} 筆業績` + (un?`，${un} 個專案名稱待指派`:' ✓'));
-  return true;
-}
-/* ── 匯入紀錄 ── */
-function openHistory(){
-  const h = sales.history||[], base = baseSnap();
-  const tot = rows => { const by=indexRows(rows).by; let o=0,b=0; Object.values(by).forEach(s=>{ o+=s.orders; b+=s.budget; }); return {o,b}; };
-  const list = [{ts:sales.importedAt,fileName:sales.fileName,rows:sales.rows,cur:true}, ...h.slice().reverse()];
-  openModal(`<h3 class="display">業績匯入紀錄</h3>
-    <div style="font-size:12.5px;color:var(--muted);margin:4px 0 12px">每次匯入 CSV，前一份會自動留在這裡。畫面上的 ▲▼ 是「目前」和「比較基準」的差距，預設與上一次比。</div>
-    <table class="mini"><thead><tr><th>匯入時間</th><th>訂單</th><th>預算</th><th></th></tr></thead><tbody>` +
-    list.map(x=>{ const t=tot(x.rows), isBase=base&&x.ts===base.ts;
-      return `<tr><td>${fmtFull(x.ts)}${x.cur?' <span class="tag">目前</span>':''}${isBase?' <span class="tag t-社群議題">比較基準</span>':''}<div style="font-size:11px;color:var(--dim)">${esc(x.fileName||'')}</div></td>
-        <td class="num">${t.o}</td><td class="num">${money(t.b)}</td>
-        <td>${x.cur?'':`${isBase?'':`<button class="btn sm ghost" data-act="setBase" data-id="${x.ts}">設為基準</button> `}<button class="btn sm danger" data-act="delSnap" data-id="${x.ts}">刪除</button>`}</td></tr>`; }).join('') +
-    `</tbody></table>${h.length?'':'<div style="font-size:12.5px;color:var(--dim);margin-top:12px">目前只有一份。下次匯入新的 CSV 後，這裡就會出現可比較的紀錄。</div>'}`);
-}
-async function readSalesFile(file){
-  const buf = await file.arrayBuffer();
-  let text = new TextDecoder('utf-8').decode(buf);
-  if(!text.includes('專案名稱')){ try{ const t2=new TextDecoder('big5').decode(buf); if(t2.includes('專案名稱')) text=t2; }catch(e){} }   // 舊系統常匯出 Big5
-  importSalesText(text, file.name);
-}
 function importCampaigns(obj){
   const arr = Array.isArray(obj)?obj:(obj.campaigns||[obj]); let n=0;
   for(const c of arr){ if(!c || !c.name || !Array.isArray(c.plans)) continue;
@@ -726,18 +539,16 @@ function importCampaigns(obj){
   if(!n){ toast('檔案格式不符（需含 name 與 plans）'); return false; }
   saveCamps(); renderAll(); toast(`已匯入 ${n} 個檔期 ✓`); return true;
 }
-$('#btnSales').onclick = () => $('#fileSales').click();
-$('#fileSales').onchange = e => { const f=e.target.files[0]; if(f) readSalesFile(f); e.target.value=''; };
 $('#btnImport').onclick = () => $('#fileJson').click();
 $('#fileJson').onchange = async e => { const f=e.target.files[0]; e.target.value=''; if(!f) return;
   try{ importCampaigns(JSON.parse((await f.text()).replace(/^﻿/,''))); }catch(err){ toast('JSON 讀取失敗'); } };
 $('#btnExport').onclick = () => {
-  const blob=new Blob([JSON.stringify({campaigns,sales},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({campaigns},null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='promo-backup-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(a.href);
 };
 
 /* ════════ 事件 ════════ */
-$('#q').addEventListener('input',e=>{ ui.q=e.target.value; renderGrid(); renderSales(); });
+$('#q').addEventListener('input',e=>{ ui.q=e.target.value; renderGrid(); });
 $('#sortSel').onchange = e => { ui.sort=e.target.value; renderGrid(); };
 $('#campSel').onchange = e => { if(e.target.value==='__new'){ e.target.value=ui.camp; openCampForm(); return; } ui.camp=e.target.value; renderAll(); };
 $('#typeChips').addEventListener('click',e=>{ const b=e.target.closest('[data-type]'); if(!b) return; ui.type=b.dataset.type; renderAll(); });
@@ -749,27 +560,6 @@ $('#grid').addEventListener('click',e=>{
     store.set('promo_closed',ui.closed); tg.parentElement.classList.toggle('closed', i<0); return; }
   const row=e.target.closest('.prow[data-id]'); if(row) openDetail(row.dataset.id);
 });
-$('#salesBox').addEventListener('click',e=>{
-  const tg=e.target.closest('[data-stoggle]');
-  if(tg){ const id=tg.dataset.stoggle, i=ui.sClosed.indexOf(id); if(i>=0) ui.sClosed.splice(i,1); else ui.sClosed.push(id);
-    store.set('promo_sclosed',ui.sClosed); tg.parentElement.classList.toggle('closed', i<0); return; }
-  const o=e.target.closest('[data-open]'); if(o) openDetail(o.dataset.open); });
-/* 對不到的專案名稱 → 直接建立成新方案（名稱、價格從專案名稱帶入），再開編輯表單補內容 */
-function planFromRow(rowName){
-  if(!campaigns.length){ toast('請先新增檔期'); return null; }
-  const c = campaigns.filter(c=>c.name && rowName.includes(c.name)).sort((a,b)=>b.name.length-a.name.length)[0]
-         || campaigns.find(c=>c.id===ui.camp) || campaigns[0];
-  let rest = rowName.includes(c.name) ? rowName.slice(rowName.indexOf(c.name)+c.name.length) : rowName;
-  const m = rest.match(/[（(]([\d.]+)萬[)）]\s*$/);
-  const p = { id:uid('p'), name:(m?rest.slice(0,m.index):rest).trim()||rowName, type:'其他', price:m?Math.round(+m[1]*10000):0,
-              priceLabel:'專案價', mediaValue:0, content:'', fees:'', notes:'' };
-  (c.plans=c.plans||[]).push(p); saveCamps();
-  return p.id;
-}
-$('#salesBox').addEventListener('change',e=>{ const s=e.target.closest('[data-map]'); if(!s||!s.value) return;
-  if(s.value==='__new'){ const id=planFromRow(s.dataset.map); if(!id){ s.value=''; return; }
-    sales.map = sales.map||{}; sales.map[s.dataset.map]=id; saveSales(); renderAll(); openPlanForm(id); toast('已建立新方案，請補上內容'); return; }
-  sales.map = sales.map||{}; sales.map[s.dataset.map]=s.value; saveSales(); renderAll(); toast('已指派 ✓'); });
 $('#cmpClear').onclick = () => { ui.picked=[]; renderGrid(); renderCmpBar(); };
 $('#cmpGo').onclick = openCompare;
 document.addEventListener('click',e=>{
@@ -783,9 +573,6 @@ document.addEventListener('click',e=>{
     case 'pickFromDetail': togglePick(id); closeModal(); break;
     case 'editCamp': openCampForm(ui.camp); break;
     case 'saveCamp': saveCamp(id); break;
-    case 'history': openHistory(); break;
-    case 'setBase': ui.baseTs=+id; renderAll(); openHistory(); break;
-    case 'delSnap': { if(confirm('確定刪除這份匯入紀錄？')){ sales.history=(sales.history||[]).filter(x=>x.ts!==+id); if(ui.baseTs===+id) ui.baseTs=null; saveSales(); renderAll(); openHistory(); } break; }
     case 'delCamp': { const c=campaigns.find(c=>c.id===id); if(c && confirm(`確定刪除檔期「${c.name}」和底下 ${(c.plans||[]).length} 個方案？`)){ campaigns=campaigns.filter(x=>x.id!==id); ui.camp='all'; saveCamps(); closeModal(); renderAll(); } break; }
   }
 });
@@ -794,7 +581,6 @@ document.addEventListener('click',e=>{
 function applyRemote(k,val){
   try{ localStorage.setItem('ws2_'+k, JSON.stringify(val)); }catch(e){}
   if(k==='promos') campaigns = val||[];
-  if(k==='promoSales') sales = val||{rows:[],map:{}};
   renderAll();
 }
 async function startCloud(){
