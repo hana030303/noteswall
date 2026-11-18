@@ -107,7 +107,7 @@ textarea.inp{resize:vertical;line-height:1.6;font-size:13px}
 .ghead .cst{margin-left:auto}
 .camp .cst{margin-bottom:6px}
 .gbody{border-top:1px solid var(--border-2)}
-.prow{display:grid;grid-template-columns:22px minmax(200px,2fr) 110px 90px 70px 80px;gap:12px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border-2);font-size:13.5px;cursor:pointer;transition:background .15s}
+.prow{display:grid;grid-template-columns:22px minmax(200px,2fr) 110px 90px 80px;gap:12px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border-2);font-size:13.5px;cursor:pointer;transition:background .15s}
 .prow:last-child{border-bottom:none}
 .prow:not(.head):hover{background:rgba(255,255,255,.5)}
 .prow.head{font-size:11.5px;color:var(--muted);padding:7px 16px;cursor:default}
@@ -195,7 +195,7 @@ textarea.inp{resize:vertical;line-height:1.6;font-size:13px}
   .camp .rules{columns:1}
   .row2,.row3{grid-template-columns:1fr}
   .prow{grid-template-columns:22px 1fr 96px;row-gap:2px}
-  .prow .c-mv,.prow .c-disc,.prow .c-imp{display:none}
+  .prow .c-mv,.prow .c-imp{display:none}
   .ghead{flex-wrap:wrap}
   .logo small{display:none}
 }
@@ -224,7 +224,6 @@ textarea.inp{resize:vertical;line-height:1.6;font-size:13px}
       <option value="price">價格 低→高</option>
       <option value="priceD">價格 高→低</option>
       <option value="mv">媒體價值 高→低</option>
-      <option value="disc">折數 低→高</option>
       <option value="imp">曝光數 高→低</option>
       <option value="cp">每萬元曝光 高→低</option>
     </select>
@@ -328,7 +327,6 @@ function parseFees(txt){
   return lines(txt).map(l=>{ const m=l.match(/^(.*?)[:：]\s*\$?([\d,\.]+)\s*$/); return m?{label:m[1].trim(),amount:+m[2].replace(/,/g,'')}:{label:l,amount:0}; });
 }
 const impOf = p => { let s=0; for(const m of (p.content||'').matchAll(/(\d+(?:\.\d+)?)\s*萬次/g)) s+=+m[1]; return s; };   // 單位：萬次
-const discOf = p => p.mediaValue>0 ? p.price/p.mediaValue : null;        // 折數（0~1）
 const cpOf   = p => p.price>0 ? impOf(p)/(p.price/10000) : 0;            // 每萬元可得曝光（萬次）
 const allPlans = () => campaigns.flatMap(c => (c.plans||[]).map(p => ({p, c})));
 const findPlan = id => allPlans().find(x=>x.p.id===id);
@@ -343,7 +341,7 @@ function visiblePlans(){
     (ui.type==='all' || p.type===ui.type) &&
     (!q || squash([p.name,p.type,c.name,p.content,p.fees,p.notes,wan(p.price)].join(' ')).includes(q)));
   const f = { price:(a,b)=>a.p.price-b.p.price, priceD:(a,b)=>b.p.price-a.p.price, mv:(a,b)=>(b.p.mediaValue||0)-(a.p.mediaValue||0),
-              disc:(a,b)=>(discOf(a.p)??9)-(discOf(b.p)??9), imp:(a,b)=>impOf(b.p)-impOf(a.p), cp:(a,b)=>cpOf(b.p)-cpOf(a.p),
+              imp:(a,b)=>impOf(b.p)-impOf(a.p), cp:(a,b)=>cpOf(b.p)-cpOf(a.p),
             }[ui.sort];
   if(f) list = [...list].sort(f);
   return list;
@@ -403,14 +401,13 @@ function renderGrid(){
         ${statusBadge(campStatus(c))}
         </div>
       <div class="gbody">
-        <div class="prow head"><span></span><span>方案</span><span class="r">價格</span><span class="r c-mv">媒體價值</span><span class="r c-disc">折數</span><span class="r c-imp">廣告曝光</span></div>
-        ${items.map(({p})=>{ const d=discOf(p), imp=impOf(p);
+        <div class="prow head"><span></span><span>方案</span><span class="r">價格</span><span class="r c-mv">媒體價值</span><span class="r c-imp">廣告曝光</span></div>
+        ${items.map(({p})=>{ const imp=impOf(p);
           return `<div class="prow ${ui.picked.includes(p.id)?'sel':''}" data-id="${esc(p.id)}">
             <button class="pick" data-pick="${esc(p.id)}" title="加入比對">✓</button>
             <div class="pn">${esc(p.name)} <span class="tag t-${esc(p.type)}">${esc(p.type||'其他')}</span></div>
             <div class="r num pp">${money(p.price)}</div>
             <div class="r num c-mv">${p.mediaValue?wan(p.mediaValue):'—'}</div>
-            <div class="r num c-disc">${d!=null?(d*10).toFixed(1)+' 折':'—'}</div>
             <div class="r num c-imp">${imp?imp+'萬':'—'}</div>
           </div>`; }).join('')}
       </div></div>`;
@@ -460,14 +457,13 @@ const secHTML = p => { const secs=parseContent(p.content); if(!secs.length) retu
 
 function openDetail(id){
   const x = findPlan(id); if(!x) return; const {p,c} = x;
-  const d = discOf(p), imp = impOf(p), fees = parseFees(p.fees), notes = lines(p.notes);
+  const imp = impOf(p), fees = parseFees(p.fees), notes = lines(p.notes);
   openModal(`
     <div class="cname" style="font-size:12px;color:var(--dim)">${esc((c.year?c.year+' ':'')+c.name)}</div>
     <h3 class="display">${esc(p.name)} <span class="tag t-${esc(p.type)}" style="vertical-align:3px">${esc(p.type||'其他')}</span></h3>
     <div class="price num" style="margin-top:10px">${money(p.price)}<small>${esc(p.priceLabel||'')}</small></div>
-    <div class="kv" style="margin-top:12px;grid-template-columns:repeat(4,1fr)">
+    <div class="kv" style="margin-top:12px;grid-template-columns:repeat(3,1fr)">
       <div><div class="k">媒體價值</div><div class="v num">${p.mediaValue?money(p.mediaValue):'—'}</div></div>
-      <div><div class="k">折數</div><div class="v num">${d!=null?(d*10).toFixed(1)+' 折':'—'}</div></div>
       <div><div class="k">廣告曝光</div><div class="v num">${imp?imp+' 萬次':'—'}</div></div>
       <div><div class="k">每萬元曝光</div><div class="v num">${imp?cpOf(p).toFixed(1)+' 萬次':'—'}</div></div>
     </div>
@@ -503,7 +499,6 @@ function openCompare(){
     <div class="cmpwrap"><table class="cmp"><thead><tr><th class="rk"></th>${xs.map(({p,c})=>`<th><small>${esc(c.name)}</small>${esc(p.name)}</th>`).join('')}</tr></thead><tbody>
       ${numRow('價格', xs.map(x=>x.p.price), money, -1)}
       ${numRow('媒體價值', xs.map(x=>x.p.mediaValue||null), money, 1)}
-      ${numRow('折數', xs.map(x=>discOf(x.p)), v=>(v*10).toFixed(1)+' 折', -1)}
       ${numRow('廣告曝光', xs.map(x=>impOf(x.p)||null), v=>v+' 萬次', 1)}
       ${numRow('每萬元曝光', xs.map(x=>impOf(x.p)?+cpOf(x.p).toFixed(1):null), v=>v+' 萬次', 1)}
       <tr><td class="rk">方案內容</td>${xs.map(x=>`<td>${contentCell(x)}</td>`).join('')}</tr>
