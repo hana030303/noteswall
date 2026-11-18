@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>優惠案查詢 · Promo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --glass:rgba(255,255,255,.55); --glass-2:rgba(255,255,255,.72); --glass-strong:rgba(255,255,255,.9);
+  --border:rgba(255,255,255,.7); --border-2:rgba(150,160,190,.28);
+  --ink:#2a2e3a; --muted:#6b7186; --dim:#9aa0b4;
+  --accent:#5b7cfa; --accent-2:#3a5bd9; --accent-soft:rgba(91,124,250,.14);
+  --ok:#22a06b; --ok-soft:rgba(34,160,107,.13); --warn:#e0a020; --warn-soft:rgba(224,160,32,.15); --danger:#e5484d;
+  --shadow:0 8px 32px -8px rgba(60,70,120,.25); --shadow-sm:0 2px 10px -4px rgba(60,70,120,.2);
+  --r-xl:24px; --r-lg:18px; --r-md:13px; --r-sm:9px;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC',system-ui,sans-serif;color:var(--ink);min-height:100vh;font-size:14px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;background:linear-gradient(120deg,#eef2ff 0%,#f7f0fb 40%,#eafaf5 100%);overflow-x:hidden}
+.blob{position:fixed;border-radius:50%;filter:blur(60px);opacity:.5;z-index:0;pointer-events:none}
+.blob.a{width:44vw;height:44vw;background:#bcd0ff;top:-12vw;left:-8vw}
+.blob.b{width:38vw;height:38vw;background:#ffcdf0;bottom:-14vw;right:-6vw}
+.display,.num{font-family:'Space Grotesk','Noto Sans TC',sans-serif}
+.num{font-variant-numeric:tabular-nums}
+button{font-family:inherit;color:inherit;border:none;background:none;cursor:pointer}
+input,select,textarea{font-family:inherit;color:inherit;font-size:14px}
+a{color:inherit;text-decoration:none}
+.hidden{display:none!important}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:rgba(120,130,170,.35);border-radius:20px;border:3px solid transparent;background-clip:padding-box}
+.glass{background:var(--glass);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);
+  border:1px solid var(--border);box-shadow:var(--shadow);border-radius:var(--r-lg)}
+.wrap{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:22px 18px 120px}
+
+header{position:sticky;top:12px;z-index:30;margin-bottom:18px}
+.nav{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:var(--r-xl);flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:11px;font-weight:700;font-size:16px;white-space:nowrap;margin-right:auto}
+.logo .mark{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--accent),#7d5bd9);
+  display:grid;place-items:center;color:#fff;box-shadow:0 6px 16px rgba(91,124,250,.4)}
+.logo small{display:block;font-weight:400;font-size:10.5px;color:var(--muted);letter-spacing:1px}
+.toolbtn{padding:9px 12px;border-radius:var(--r-sm);background:rgba(255,255,255,.55);border:1px solid var(--border-2);
+  color:var(--muted);font-size:12px;transition:.2s;white-space:nowrap}
+.toolbtn:hover{color:var(--ink);border-color:var(--accent);background:#fff}
+.status{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);background:rgba(255,255,255,.6);border:1px solid var(--border-2);padding:8px 11px;border-radius:999px;white-space:nowrap}
+.status .led{width:7px;height:7px;border-radius:50%;background:var(--dim);flex:none}
+.status.on .led{background:#22a06b;box-shadow:0 0 0 3px rgba(34,160,107,.18)}
+.status.local .led{background:#e0a020;box-shadow:0 0 0 3px rgba(224,160,32,.18)}
+.status.err .led{background:var(--danger);box-shadow:0 0 0 3px rgba(229,72,77,.18)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 16px;border-radius:var(--r-sm);font-weight:600;font-size:13px;
+  background:var(--accent);color:#fff;box-shadow:0 4px 14px rgba(91,124,250,.35);transition:transform .2s var(--ease)}
+.btn:hover{transform:translateY(-1px)}
+.btn.ghost{background:rgba(255,255,255,.6);color:var(--ink);border:1px solid var(--border-2);box-shadow:none}
+.btn.ghost:hover{border-color:var(--accent);color:var(--accent-2)}
+.btn.danger{background:none;color:var(--danger);border:1px solid rgba(229,72,77,.35);box-shadow:none}
+.btn.sm{padding:7px 12px;font-size:12px}
+.inp{width:100%;padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--border-2);background:rgba(255,255,255,.75);outline:none;transition:.2s}
+.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+textarea.inp{resize:vertical;line-height:1.6;font-size:13px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px;font-weight:500}
+.field .hint{font-size:11px;color:var(--dim);margin-top:4px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* toolbar */
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 14px;margin-bottom:16px}
+.bar .search{flex:1 1 220px;min-width:180px}
+.bar select.inp{width:auto;min-width:130px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:7px 13px;border-radius:999px;font-size:12.5px;color:var(--muted);background:rgba(255,255,255,.55);border:1px solid var(--border-2);transition:.2s}
+.chip:hover{color:var(--ink)}
+.chip.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* campaign strip */
+.camp{padding:14px 18px;margin-bottom:16px;display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.camp h2{font-size:17px}
+.camp .meta{font-size:12px;color:var(--muted)}
+.camp .rules{flex:1 1 100%;font-size:12.5px;color:var(--muted);padding-left:18px;columns:2;column-gap:28px}
+.camp .rules li{break-inside:avoid;margin-bottom:2px}
+.camp .acts{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+
+/* list */
+.grp{margin-bottom:14px;overflow:hidden}
+.ghead{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;user-select:none;transition:background .2s}
+.ghead:hover{background:rgba(255,255,255,.35)}
+.ghead .chev{width:22px;height:22px;display:grid;place-items:center;font-size:11px;color:var(--muted);transition:transform .25s var(--ease);flex:none}
+.grp.closed .ghead .chev{transform:rotate(-90deg)}
+.ghead h3{font-size:15.5px}
+.ghead .gmeta{font-size:12px;color:var(--muted)}
+.grp.closed .gbody{display:none}
+.gbody{border-top:1px solid var(--border-2)}
+.prow{display:grid;grid-template-columns:22px minmax(200px,2fr) 110px 90px 70px 80px;gap:12px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border-2);font-size:13.5px;cursor:pointer;transition:background .15s}
+.prow:last-child{border-bottom:none}
+.prow:not(.head):hover{background:rgba(255,255,255,.5)}
+.prow.head{font-size:11.5px;color:var(--muted);padding:7px 16px;cursor:default}
+.prow.sel{background:var(--accent-soft)}
+.prow .r{text-align:right}
+.prow .pn{font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.prow .pp{font-weight:700;font-size:15px}
+.tag{display:inline-block;font-size:11px;font-weight:400;padding:2px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent-2);white-space:nowrap}
+.tag.t-影音{background:rgba(229,72,150,.12);color:#c2317a}
+.tag.t-社群議題{background:var(--ok-soft);color:#17805a}
+.tag.t-蓋版廣告{background:var(--accent-soft);color:var(--accent-2)}
+.tag.t-廣告曝光{background:var(--warn-soft);color:#9a6b00}
+.pick{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--border-2);background:rgba(255,255,255,.8);display:grid;place-items:center;font-size:13px;color:transparent;flex:none;transition:.15s}
+.pick:hover{border-color:var(--accent)}
+.prow.sel .pick{background:var(--accent);border-color:var(--accent);color:#fff}
+.price{font-size:27px;font-weight:700;letter-spacing:-.5px;line-height:1.1}
+.price small{font-size:11px;font-weight:400;color:var(--muted);letter-spacing:0;margin-left:6px;font-family:'Noto Sans TC'}
+.kv{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.kv div{background:rgba(255,255,255,.5);border-radius:var(--r-sm);padding:7px 9px}
+.kv .k{font-size:10.5px;color:var(--muted)}
+.kv .v{font-size:13.5px;font-weight:600}
+.empty{text-align:center;color:var(--muted);padding:48px 20px}
+.empty .big{font-size:34px;margin-bottom:8px}
+
+
+/* compare bar */
+#cmpBar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(120px);z-index:40;display:flex;align-items:center;gap:12px;
+  padding:10px 12px 10px 18px;border-radius:999px;background:var(--ink);color:#fff;box-shadow:0 14px 40px -10px rgba(30,34,50,.6);transition:transform .35s var(--ease);max-width:94vw}
+#cmpBar.show{transform:translateX(-50%)}
+#cmpBar .names{font-size:12.5px;opacity:.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:46vw}
+#cmpBar .btn{border-radius:999px}
+#cmpBar .x{color:#fff;opacity:.6;font-size:12.5px;padding:6px 8px}
+#cmpBar .x:hover{opacity:1}
+
+/* modal */
+.modal-mask{position:fixed;inset:0;z-index:100;background:rgba(40,44,60,.4);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:14px;opacity:0;pointer-events:none;transition:opacity .25s}
+.modal-mask.show{opacity:1;pointer-events:auto}
+.modal{width:min(720px,100%);max-height:92vh;overflow:auto;border-radius:var(--r-lg);padding:24px;background:var(--glass-strong);position:relative;transform:translateY(14px);transition:transform .3s var(--ease)}
+.modal.wide{width:min(1180px,100%)}
+.modal-mask.show .modal{transform:none}
+.modal h3{font-size:19px;margin-bottom:2px;padding-right:36px}
+.modal .close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:10px;background:rgba(150,160,190,.18);font-size:15px}
+.modal .close:hover{background:rgba(150,160,190,.35)}
+.modal .foot{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+.dsec{margin-top:16px}
+.dsec h4{font-size:12px;color:var(--muted);letter-spacing:.5px;margin-bottom:6px;font-weight:500}
+.dsec ul{padding-left:18px;font-size:13.5px}
+.dsec li{margin-bottom:2px}
+.dsec .lab{font-weight:600;font-size:13px;margin:8px 0 3px}
+.notes li{color:var(--muted);font-size:12.5px}
+.items{width:100%;border-collapse:collapse;font-size:13.5px}
+.items th{font-size:11.5px;color:var(--muted);font-weight:500;text-align:left;padding:6px 10px;border-bottom:1px solid var(--border-2)}
+.items td{padding:7px 10px;border-bottom:1px solid var(--border-2);vertical-align:top}
+.items tr.sec td{font-weight:700;font-size:12.5px;background:rgba(150,160,190,.12);padding:5px 10px}
+.items th:nth-child(2),.items td.q{text-align:right;white-space:nowrap;font-weight:600;width:84px}
+.items td.nt{color:var(--muted);font-size:12.5px;width:34%}
+.cmp .cq{color:var(--accent-2);white-space:nowrap}
+.cmp .cn{display:block;font-size:11px;color:var(--muted)}
+.mini{width:100%;border-collapse:collapse;font-size:13px}
+.mini th{font-size:11.5px;color:var(--muted);font-weight:500;text-align:right;padding:6px 8px;border-bottom:1px solid var(--border-2)}
+.mini td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--border-2)}
+.mini th:first-child,.mini td:first-child{text-align:left}
+
+/* compare table */
+.cmpwrap{overflow-x:auto;margin-top:14px}
+.cmp{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
+.cmp th,.cmp td{padding:10px 12px;border-bottom:1px solid var(--border-2);vertical-align:top;text-align:left;min-width:210px}
+.cmp th.rk,.cmp td.rk{min-width:96px;width:96px;color:var(--muted);font-size:12px;font-weight:500;position:sticky;left:0;background:#f4f5fb;z-index:1}
+.cmp thead th{font-size:14.5px;font-weight:700;border-bottom:2px solid var(--ink)}
+.cmp thead th small{display:block;font-weight:400;font-size:11px;color:var(--dim)}
+.cmp td.n{font-family:'Space Grotesk';font-size:15px;font-weight:600}
+.cmp td.best{background:var(--ok-soft);color:#17805a}
+.cmp td.best::after{content:' ★';font-size:11px}
+.cmp ul{padding-left:16px}
+.cmp .lab{font-weight:600;font-size:12px;margin:6px 0 2px;color:var(--muted)}
+.cmp .lab:first-child{margin-top:0}
+.cmp li.only{background:var(--warn-soft);border-radius:4px}
+.legend{font-size:11.5px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:4px}
+
+#toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(20px);z-index:200;background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:.3s var(--ease)}
+#toast.show{opacity:1;transform:translateX(-50%)}
+
+@media(max-width:820px){
+  .camp .rules{columns:1}
+  .row2,.row3{grid-template-columns:1fr}
+  .prow{grid-template-columns:22px 1fr 96px;row-gap:2px}
+  .prow .c-mv,.prow .c-disc,.prow .c-imp{display:none}
+  .ghead{flex-wrap:wrap}
+  .logo small{display:none}
+}
+</style>
+</head>
+<body>
+<div class="blob a"></div><div class="blob b"></div>
+
+<div class="wrap">
+  <header>
+    <div class="nav glass">
+      <div class="logo"><div class="mark">🏷️</div><div>優惠案管理器<small>PROMO MANAGER</small></div></div>
+      <div class="status local" id="syncStatus"><span class="led"></span><span id="syncTxt">連線中…</span></div>
+      <button class="toolbtn" id="btnImport">⬆︎ 匯入方案 JSON</button>
+      <button class="toolbtn" id="btnExport">⬇︎ 匯出</button>
+    </div>
+  </header>
+
+  <div class="bar glass">
+    <input class="inp search" id="q" placeholder="搜尋方案名稱、版位、規格…（例：Underlay、限動、大佈告）">
+    <select class="inp" id="campSel"></select>
+    <div class="chips" id="typeChips"></div>
+    <select class="inp" id="sortSel">
+      <option value="default">排序：原始順序</option>
+      <option value="price">價格 低→高</option>
+      <option value="priceD">價格 高→低</option>
+      <option value="mv">媒體價值 高→低</option>
+      <option value="disc">折數 低→高</option>
+      <option value="imp">曝光數 高→低</option>
+      <option value="cp">每萬元曝光 高→低</option>
+    </select>
+  </div>
+
+  <div id="campBox"></div>
+  <div id="grid"></div>
+
+</div>
+
+<div id="cmpBar">
+  <span class="names" id="cmpNames"></span>
+  <button class="x" id="cmpClear">清除</button>
+  <button class="btn sm" id="cmpGo">並排比對</button>
+</div>
+
+<div class="modal-mask" id="mask"><div class="modal" id="modal"></div></div>
+<input type="file" id="fileJson" accept=".json,application/json" class="hidden">
+<div id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   優惠案管理器 — 單檔前端
+   資料：LocalStorage + Firestore（與工作站同一專案、同一 workspace，key 不同）
+   方案資料只存在本機／雲端，不寫進這個公開檔案。
+   ══════════════════════════════════════════════════════════════ */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = p => (p||'x')+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3);
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBbgYS1ALqYm9WQ0CwpU4g6aPVYY3K0qYc",
+  authDomain: "work-e04df.firebaseapp.com",
+  projectId: "work-e04df",
+  appId: "1:970046892491:web:9d5e5a0a14508a3f376e4e"
+};
+const WORKSPACE_ID = 'main';
+const CLOUD_KEYS = ['promos'];
+let cloud = null; const writeTimers = {};
+
+const store = {
+  get(k,def){ try{ const v=localStorage.getItem('ws2_'+k); return v==null?def:JSON.parse(v);}catch(e){return def;} },
+  set(k,v){ try{ localStorage.setItem('ws2_'+k, JSON.stringify(v)); }catch(e){ toast('⚠️ 本機儲存空間可能已滿'); }
+            if(cloud && CLOUD_KEYS.includes(k)) cloud.write(k,v); }
+};
+const localRaw = k => { try{ const v=localStorage.getItem('ws2_'+k); return v==null?null:JSON.parse(v);}catch(e){return null;} };
+
+let toastT;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200); }
+function setSync(cls,txt){ $('#syncStatus').className='status '+cls; $('#syncTxt').textContent=txt; }
+
+/* ════════ 資料 ════════ */
+let campaigns = store.get('promos', []);                     // [{id,name,subtitle,year,start,end,deadline,rules,plans:[…]}]
+const TYPES = ['影音','社群議題','蓋版廣告','廣告曝光','其他'];
+const ui = { q:'', camp:'all', type:'all', sort:'default', picked:[], closed:store.get('promo_closed',[]) };
+
+const saveCamps = () => store.set('promos', campaigns);
+
+const money = n => '$'+Math.round(n||0).toLocaleString('en-US');
+const wan   = n => { const v=(n||0)/10000; return (Number.isInteger(v)?v:v.toFixed(1))+'萬'; };
+const lines = t => (t||'').split('\n').map(s=>s.trim()).filter(Boolean);
+
+function parseContent(txt){
+  const secs=[]; let cur=null;
+  for(const t of lines(txt)){
+    if(t.startsWith('#')){ cur={label:t.replace(/^#+\s*/,''),items:[]}; secs.push(cur); }
+    else { if(!cur){ cur={label:'內容',items:[]}; secs.push(cur); } cur.items.push(t); }
+  }
+  return secs;
+}
+function parseFees(txt){
+  return lines(txt).map(l=>{ const m=l.match(/^(.*?)[:：]\s*\$?([\d,\.]+)\s*$/); return m?{label:m[1].trim(),amount:+m[2].replace(/,/g,'')}:{label:l,amount:0}; });
+}
+const impOf = p => { let s=0; for(const m of (p.content||'').matchAll(/(\d+(?:\.\d+)?)\s*萬次/g)) s+=+m[1]; return s; };   // 單位：萬次
+const discOf = p => p.mediaValue>0 ? p.price/p.mediaValue : null;        // 折數（0~1）
+const cpOf   = p => p.price>0 ? impOf(p)/(p.price/10000) : 0;            // 每萬元可得曝光（萬次）
+const allPlans = () => campaigns.flatMap(c => (c.plans||[]).map(p => ({p, c})));
+const findPlan = id => allPlans().find(x=>x.p.id===id);
+
+const squash  = s => String(s||'').replace(/\s+/g,'').toLowerCase();
+
+/* ════════ 繪製 ════════ */
+function visiblePlans(){
+  const q = squash(ui.q);
+  let list = allPlans().filter(({p,c}) =>
+    (ui.camp==='all' || c.id===ui.camp) &&
+    (ui.type==='all' || p.type===ui.type) &&
+    (!q || squash([p.name,p.type,c.name,p.content,p.fees,p.notes,wan(p.price)].join(' ')).includes(q)));
+  const f = { price:(a,b)=>a.p.price-b.p.price, priceD:(a,b)=>b.p.price-a.p.price, mv:(a,b)=>(b.p.mediaValue||0)-(a.p.mediaValue||0),
+              disc:(a,b)=>(discOf(a.p)??9)-(discOf(b.p)??9), imp:(a,b)=>impOf(b.p)-impOf(a.p), cp:(a,b)=>cpOf(b.p)-cpOf(a.p),
+            }[ui.sort];
+  if(f) list = [...list].sort(f);
+  return list;
+}
+
+function renderFilters(){
+  $('#campSel').innerHTML = `<option value="all">全部檔期</option>` + campaigns.map(c=>`<option value="${esc(c.id)}">${esc((c.year?c.year+' ':'')+c.name)}</option>`).join('') + `<option value="__new">＋ 新增檔期…</option>`;
+  if(ui.camp!=='all' && !campaigns.some(c=>c.id===ui.camp)) ui.camp='all';
+  $('#campSel').value = ui.camp;
+  const used = TYPES.filter(t=>allPlans().some(x=>x.p.type===t));
+  $('#typeChips').innerHTML = ['all',...used].map(t=>`<button class="chip ${ui.type===t?'active':''}" data-type="${esc(t)}">${t==='all'?'全部':esc(t)}</button>`).join('');
+}
+
+
+function renderCamp(){
+  const c = campaigns.find(c=>c.id===ui.camp);
+  if(!c){ $('#campBox').innerHTML=''; return; }
+  const rules = lines(c.rules);
+  $('#campBox').innerHTML = `<div class="camp glass">
+    <div><h2 class="display">${esc((c.year?c.year+' ':'')+c.name)}</h2>
+      <div class="meta">${esc(c.subtitle||'')}${c.start?` ・ 推案 ${esc(c.start)} ~ ${esc(c.end||'')}`:''}${c.deadline?` ・ 刊登截止 ${esc(c.deadline)}`:''}</div></div>
+    <div class="acts"><button class="btn sm" data-act="newPlan">＋ 新增方案</button><button class="btn sm ghost" data-act="editCamp">編輯檔期</button></div>
+    ${rules.length?`<ul class="rules">${rules.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>`:''}
+  </div>`;
+}
+
+function renderGrid(){
+  const list = visiblePlans();
+  if(!campaigns.length){
+    $('#grid').innerHTML = '<div class="empty glass"><div class="big">🏷️</div>還沒有任何優惠案。<br>按右上角「匯入方案 JSON」載入整理好的檔期資料，或從檔期選單選「＋ 新增檔期」手動建立。</div>'; return;
+  }
+  if(!list.length){ $('#grid').innerHTML = '<div class="empty glass"><div class="big">🔍</div>沒有符合條件的方案</div>'; return; }
+  // 依檔期分組（組內維持目前排序），點標題列可折疊
+  const groups = []; for(const x of list){ let g=groups.find(g=>g.c.id===x.c.id); if(!g) groups.push(g={c:x.c,items:[]}); g.items.push(x); }
+  $('#grid').innerHTML = groups.map(({c,items})=>{
+    const pr = items.map(x=>x.p.price).filter(Boolean), lo=Math.min(...pr), hi=Math.max(...pr);
+    return `<div class="grp glass ${ui.closed.includes(c.id)?'closed':''}">
+      <div class="ghead" data-toggle="${esc(c.id)}"><span class="chev">▼</span>
+        <div><h3 class="display">${esc((c.year?c.year+' ':'')+c.name)}</h3>
+          <div class="gmeta">${items.length} 個方案${pr.length?' ・ '+(lo===hi?wan(lo):wan(lo)+' – '+wan(hi)):''}${c.start?' ・ '+esc(c.start)+' ~ '+esc(c.end||''):''}</div></div>
+        </div>
+      <div class="gbody">
+        <div class="prow head"><span></span><span>方案</span><span class="r">價格</span><span class="r c-mv">媒體價值</span><span class="r c-disc">折數</span><span class="r c-imp">廣告曝光</span></div>
+        ${items.map(({p})=>{ const d=discOf(p), imp=impOf(p);
+          return `<div class="prow ${ui.picked.includes(p.id)?'sel':''}" data-id="${esc(p.id)}">
+            <button class="pick" data-pick="${esc(p.id)}" title="加入比對">✓</button>
+            <div class="pn">${esc(p.name)} <span class="tag t-${esc(p.type)}">${esc(p.type||'其他')}</span></div>
+            <div class="r num pp">${money(p.price)}</div>
+            <div class="r num c-mv">${p.mediaValue?wan(p.mediaValue):'—'}</div>
+            <div class="r num c-disc">${d!=null?(d*10).toFixed(1)+' 折':'—'}</div>
+            <div class="r num c-imp">${imp?imp+'萬':'—'}</div>
+          </div>`; }).join('')}
+      </div></div>`;
+  }).join('');
+}
+
+function renderCmpBar(){
+  ui.picked = ui.picked.filter(id=>findPlan(id));
+  const bar = $('#cmpBar');
+  bar.classList.toggle('show', ui.picked.length>0);
+  $('#cmpNames').textContent = `已選 ${ui.picked.length} 個：` + ui.picked.map(id=>findPlan(id).p.name).join('、');
+  $('#cmpGo').textContent = ui.picked.length<2 ? '再選 1 個即可比對' : `並排比對 (${ui.picked.length})`;
+  $('#cmpGo').style.opacity = ui.picked.length<2 ? .5 : 1;
+}
+function renderAll(){ renderFilters(); renderCamp(); renderGrid(); renderCmpBar(); }
+
+/* ════════ Modal ════════ */
+function openModal(html, wide){ const m=$('#modal'); m.className='modal'+(wide?' wide':''); m.innerHTML=`<button class="close" data-close>✕</button>`+html; $('#mask').classList.add('show'); m.scrollTop=0; }
+function closeModal(){ $('#mask').classList.remove('show'); }
+$('#mask').addEventListener('click',e=>{ if(e.target.id==='mask' || e.target.closest('[data-close]')) closeModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+
+/* 把一行版位拆成 {內容, 數量, 備註}
+   「噓心蕩Young 短影音(直式，30秒內)/提供訪綱/1支」→ 內容｜1支｜提供訪綱
+   規則：以括號外的「/」切段；「數字+單位」那段是數量，它後面的括號是備註；
+   以「提供、含、限…」開頭的段落算備註，其餘併回內容（例：噓星聞/聯合新聞網粉絲團上架）。
+   自動拆錯時，可直接寫成「內容 | 數量 | 備註」強制指定。 */
+const QTY_RE = /^([\d.,]+\s*(?:萬次|次|則|支|週|輪|式|篇|天|檔|日|個|集|月|小時)|週|輪|月|日)\s*(?:[（(](.*)[)）])?$/;
+const NOTE_RE = /^(提供|含|限|需|不|另|可|僅|贈)/;
+function parseItem(line){
+  if(line.includes('|') || line.includes('｜')){ const a=line.split(/[|｜]/).map(s=>s.trim()); return {text:a[0]||'', qty:a[1]||'', note:a.slice(2).filter(Boolean).join('；')}; }
+  const segs=[]; let cur='', depth=0;
+  for(const ch of line){ if('(（'.includes(ch)) depth++; else if(')）'.includes(ch)) depth=Math.max(0,depth-1);
+    if(ch==='/' && depth===0){ segs.push(cur.trim()); cur=''; } else cur+=ch; }
+  segs.push(cur.trim());
+  let qi=-1; for(let i=segs.length-1;i>0;i--){ if(QTY_RE.test(segs[i])){ qi=i; break; } }
+  if(qi<0) return {text:line, qty:'', note:''};
+  const m=segs[qi].match(QTY_RE), text=[], note=[];
+  segs.slice(0,qi).forEach((s,i)=>{ (i>0 && NOTE_RE.test(s) ? note : text).push(s); });
+  if(m[2]) note.push(m[2]);
+  note.push(...segs.slice(qi+1).filter(Boolean));
+  return {text:text.join('/'), qty:m[1].replace(/\s+/g,''), note:note.join('；')};
+}
+const secHTML = p => { const secs=parseContent(p.content); if(!secs.length) return '';
+  return `<table class="items"><thead><tr><th>內容</th><th>數量</th><th>備註</th></tr></thead><tbody>` + secs.map(s=>
+    `<tr class="sec"><td colspan="3">${esc(s.label)}</td></tr>` + s.items.map(parseItem).map(i=>`<tr><td>${esc(i.text)}</td><td class="num q">${esc(i.qty)}</td><td class="nt">${esc(i.note)}</td></tr>`).join('')).join('') + `</tbody></table>`; };
+
+function openDetail(id){
+  const x = findPlan(id); if(!x) return; const {p,c} = x;
+  const d = discOf(p), imp = impOf(p), fees = parseFees(p.fees), notes = lines(p.notes);
+  openModal(`
+    <div class="cname" style="font-size:12px;color:var(--dim)">${esc((c.year?c.year+' ':'')+c.name)}</div>
+    <h3 class="display">${esc(p.name)} <span class="tag t-${esc(p.type)}" style="vertical-align:3px">${esc(p.type||'其他')}</span></h3>
+    <div class="price num" style="margin-top:10px">${money(p.price)}<small>${esc(p.priceLabel||'')}</small></div>
+    <div class="kv" style="margin-top:12px;grid-template-columns:repeat(4,1fr)">
+      <div><div class="k">媒體價值</div><div class="v num">${p.mediaValue?money(p.mediaValue):'—'}</div></div>
+      <div><div class="k">折數</div><div class="v num">${d!=null?(d*10).toFixed(1)+' 折':'—'}</div></div>
+      <div><div class="k">廣告曝光</div><div class="v num">${imp?imp+' 萬次':'—'}</div></div>
+      <div><div class="k">每萬元曝光</div><div class="v num">${imp?cpOf(p).toFixed(1)+' 萬次':'—'}</div></div>
+    </div>
+    <div class="dsec"><h4>方案內容</h4>${secHTML(p)||'<span style="color:var(--dim)">（未填）</span>'}</div>
+    ${fees.length?`<div class="dsec"><h4>費用項目</h4><table class="mini"><tbody>${fees.map(f=>`<tr><td>${esc(f.label)}</td><td class="num">${f.amount?money(f.amount):''}</td></tr>`).join('')}
+      <tr><td><b>合計</b></td><td class="num"><b>${money(fees.reduce((a,f)=>a+f.amount,0))}</b></td></tr></tbody></table></div>`:''}
+    ${notes.length?`<div class="dsec"><h4>備註與規範</h4><ul class="notes">${notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul></div>`:''}
+    <div class="foot">
+      <button class="btn sm danger" data-act="delPlan" data-id="${esc(id)}" style="margin-right:auto">刪除</button>
+      <button class="btn sm ghost" data-act="copyPlan" data-id="${esc(id)}">複製文字</button>
+      <button class="btn sm ghost" data-act="editPlan" data-id="${esc(id)}">編輯</button>
+      <button class="btn sm" data-act="pickFromDetail" data-id="${esc(id)}">${ui.picked.includes(id)?'移出比對':'加入比對'}</button>
+    </div>`);
+}
+
+function planText(p,c){
+  return [`【${c.name}】${p.name}`, `${p.priceLabel||'價格'}：${money(p.price)}`+(p.mediaValue?`（媒體價值 ${money(p.mediaValue)}）`:''), '',
+    ...parseContent(p.content).flatMap(s=>[`▍${s.label}`, ...s.items.map(parseItem).map(i=>'・'+[i.text,i.qty,i.note].filter(Boolean).join('｜'))]),
+    ...(lines(p.notes).length?['', '▍備註', ...lines(p.notes).map(n=>'・'+n)]:[])].join('\n');
+}
+
+/* ── 並排比對 ── */
+function openCompare(){
+  const xs = ui.picked.map(findPlan).filter(Boolean); if(xs.length<2){ toast('請至少選 2 個方案'); return; }
+  const best = (vals, dir) => { const v = vals.filter(n=>n!=null && n>0); if(v.length<2) return null; const t = dir>0?Math.max(...v):Math.min(...v); return v.every(n=>n===t)?null:t; };
+  const numRow = (label, vals, fmt, dir) => { const b = dir?best(vals,dir):null;
+    return `<tr><td class="rk">${label}</td>${vals.map(v=>`<td class="n ${b!=null&&v===b?'best':''}">${v==null||(!v&&dir)?'—':fmt(v)}</td>`).join('')}</tr>`; };
+  // 內容差異：只出現在單一方案的項目標色
+  const itemSets = xs.map(({p})=>parseContent(p.content).flatMap(s=>s.items.map(squash)));
+  const count = {}; itemSets.forEach(set=>new Set(set).forEach(i=>count[i]=(count[i]||0)+1));
+  const contentCell = ({p}) => parseContent(p.content).map(s=>`<div class="lab">${esc(s.label)}</div><ul>${s.items.map(i=>{ const t=parseItem(i); return `<li class="${count[squash(i)]===1?'only':''}">${esc(t.text)}${t.qty?` <b class="num cq">${esc(t.qty)}</b>`:''}${t.note?`<small class="cn">${esc(t.note)}</small>`:''}</li>`; }).join('')}</ul>`).join('');
+  openModal(`<h3 class="display">方案比對</h3>
+    <div class="cmpwrap"><table class="cmp"><thead><tr><th class="rk"></th>${xs.map(({p,c})=>`<th><small>${esc(c.name)}</small>${esc(p.name)}</th>`).join('')}</tr></thead><tbody>
+      ${numRow('價格', xs.map(x=>x.p.price), money, -1)}
+      ${numRow('媒體價值', xs.map(x=>x.p.mediaValue||null), money, 1)}
+      ${numRow('折數', xs.map(x=>discOf(x.p)), v=>(v*10).toFixed(1)+' 折', -1)}
+      ${numRow('廣告曝光', xs.map(x=>impOf(x.p)||null), v=>v+' 萬次', 1)}
+      ${numRow('每萬元曝光', xs.map(x=>impOf(x.p)?+cpOf(x.p).toFixed(1):null), v=>v+' 萬次', 1)}
+      <tr><td class="rk">方案內容</td>${xs.map(x=>`<td>${contentCell(x)}</td>`).join('')}</tr>
+      <tr><td class="rk">費用項目</td>${xs.map(({p})=>{ const f=parseFees(p.fees); return `<td>${f.length?f.map(i=>`${esc(i.label)} <span class="num">${i.amount?money(i.amount):''}</span>`).join('<br>'):'—'}</td>`; }).join('')}</tr>
+      <tr><td class="rk">備註</td>${xs.map(({p})=>`<td><ul class="notes" style="font-size:12px;color:var(--muted)">${lines(p.notes).map(n=>`<li>${esc(n)}</li>`).join('')||'—'}</ul></td>`).join('')}</tr>
+    </tbody></table></div>
+    <div class="legend"><i style="background:var(--ok-soft)"></i>★ 該列最優　<i style="background:var(--warn-soft)"></i>只有這個方案才有的項目</div>`, true);
+}
+
+/* ── 方案編輯 ── */
+function openPlanForm(id){
+  const x = id?findPlan(id):null, p = x?x.p:{type:'蓋版廣告',priceLabel:'專案門檻價(未稅)'};
+  const campId = x?x.c.id:(ui.camp!=='all'?ui.camp:(campaigns[0]||{}).id);
+  if(!campId){ toast('請先新增檔期'); return; }
+  openModal(`<h3 class="display">${id?'編輯方案':'新增方案'}</h3>
+    <div style="height:12px"></div>
+    <div class="row2"><div class="field"><label>方案名稱</label><input class="inp" id="f_name" value="${esc(p.name||'')}"></div>
+      <div class="field"><label>所屬檔期</label><select class="inp" id="f_camp">${campaigns.map(c=>`<option value="${esc(c.id)}" ${c.id===campId?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div></div>
+    <div class="row3"><div class="field"><label>類型</label><select class="inp" id="f_type">${TYPES.map(t=>`<option ${t===p.type?'selected':''}>${t}</option>`).join('')}</select></div>
+      <div class="field"><label>價格（元）</label><input class="inp" id="f_price" inputmode="numeric" value="${p.price||''}"></div>
+      <div class="field"><label>媒體價值（元，可空）</label><input class="inp" id="f_mv" inputmode="numeric" value="${p.mediaValue||''}"></div></div>
+    <div class="field"><label>價格名稱</label><input class="inp" id="f_plabel" value="${esc(p.priceLabel||'')}" placeholder="專案門檻價(未稅)／期間限定優惠價"></div>
+    <div class="field"><label>方案內容</label><textarea class="inp" id="f_content" rows="10" placeholder="## 廣告導流&#10;新聞網手機文中原生廣告/40萬次">${esc(p.content||'')}</textarea>
+      <div class="hint">用「## 區塊名稱」分段，其下一行一個版位。每行會自動依「/」拆成 內容｜數量｜備註；拆得不對時，直接寫成「內容 | 數量 | 備註」即可。「…萬次」會自動加總為曝光數。</div></div>
+    <div class="field"><label>費用項目（可空）</label><textarea class="inp" id="f_fees" rows="3" placeholder="影音製作費: 15000">${esc(p.fees||'')}</textarea></div>
+    <div class="field"><label>備註與規範（一行一條）</label><textarea class="inp" id="f_notes" rows="4">${esc(p.notes||'')}</textarea></div>
+    <div class="foot"><button class="btn ghost" data-close>取消</button><button class="btn" data-act="savePlan" data-id="${esc(id||'')}">儲存</button></div>`);
+}
+function savePlan(id){
+  const name = $('#f_name').value.trim(); if(!name){ toast('請填方案名稱'); return; }
+  const num = s => +String(s).replace(/[^\d.]/g,'')||0;
+  const data = { name, type:$('#f_type').value, price:num($('#f_price').value), mediaValue:num($('#f_mv').value), priceLabel:$('#f_plabel').value.trim(),
+                 content:$('#f_content').value.trim(), fees:$('#f_fees').value.trim(), notes:$('#f_notes').value.trim() };
+  const target = campaigns.find(c=>c.id===$('#f_camp').value);
+  if(id){ const x=findPlan(id); Object.assign(x.p,data);
+          if(x.c.id!==target.id){ x.c.plans=x.c.plans.filter(q=>q.id!==id); target.plans.push(x.p); } }
+  else { id=uid('p'); (target.plans=target.plans||[]).push({id,...data}); }
+  saveCamps(); renderAll(); openDetail(id); toast('已儲存 ✓');
+}
+
+/* ── 檔期編輯 ── */
+function openCampForm(id){
+  const c = campaigns.find(c=>c.id===id) || {};
+  openModal(`<h3 class="display">${id?'編輯檔期':'新增檔期'}</h3><div style="height:12px"></div>
+    <div class="row2"><div class="field"><label>檔期名稱</label><input class="inp" id="c_name" value="${esc(c.name||'')}" placeholder="開學季一應(11)俱全"></div>
+      <div class="field"><label>年度</label><input class="inp" id="c_year" value="${esc(c.year||new Date().getFullYear())}"></div></div>
+    <div class="field"><label>副標</label><input class="inp" id="c_sub" value="${esc(c.subtitle||'')}">
+</div>
+    <div class="row3"><div class="field"><label>推案開始</label><input class="inp" type="date" id="c_start" value="${esc(c.start||'')}"></div>
+      <div class="field"><label>推案結束</label><input class="inp" type="date" id="c_end" value="${esc(c.end||'')}"></div>
+      <div class="field"><label>刊登截止</label><input class="inp" type="date" id="c_dead" value="${esc(c.deadline||'')}"></div></div>
+    <div class="field"><label>專案規範（一行一條）</label><textarea class="inp" id="c_rules" rows="6">${esc(c.rules||'')}</textarea></div>
+    <div class="foot">${id?`<button class="btn sm danger" data-act="delCamp" data-id="${esc(id)}" style="margin-right:auto">刪除檔期</button>`:''}
+      <button class="btn ghost" data-close>取消</button><button class="btn" data-act="saveCamp" data-id="${esc(id||'')}">儲存</button></div>`);
+}
+function saveCamp(id){
+  const name=$('#c_name').value.trim(); if(!name){ toast('請填檔期名稱'); return; }
+  const data={name,year:$('#c_year').value.trim(),subtitle:$('#c_sub').value.trim(),start:$('#c_start').value,end:$('#c_end').value,deadline:$('#c_dead').value,rules:$('#c_rules').value.trim()};
+  if(id) Object.assign(campaigns.find(c=>c.id===id),data); else { id=uid('c'); campaigns.push({id,...data,plans:[]}); }
+  ui.camp=id; saveCamps(); closeModal(); renderAll(); toast('已儲存 ✓');
+}
+
+/* ════════ 匯入／匯出 ════════ */
+function importCampaigns(obj){
+  const arr = Array.isArray(obj)?obj:(obj.campaigns||[obj]); let n=0;
+  for(const c of arr){ if(!c || !c.name || !Array.isArray(c.plans)) continue;
+    c.id = c.id||uid('c'); c.plans.forEach(p=>{ p.id=p.id||uid('p'); });
+    const i = campaigns.findIndex(x=>x.id===c.id); if(i>=0) campaigns[i]=c; else campaigns.push(c);
+    ui.camp=c.id; n++; }
+  if(!n){ toast('檔案格式不符（需含 name 與 plans）'); return false; }
+  saveCamps(); renderAll(); toast(`已匯入 ${n} 個檔期 ✓`); return true;
+}
+$('#btnImport').onclick = () => $('#fileJson').click();
+$('#fileJson').onchange = async e => { const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  try{ importCampaigns(JSON.parse((await f.text()).replace(/^﻿/,''))); }catch(err){ toast('JSON 讀取失敗'); } };
+$('#btnExport').onclick = () => {
+  const blob=new Blob([JSON.stringify({campaigns},null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='promo-backup-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(a.href);
+};
+
+/* ════════ 事件 ════════ */
+$('#q').addEventListener('input',e=>{ ui.q=e.target.value; renderGrid(); });
+$('#sortSel').onchange = e => { ui.sort=e.target.value; renderGrid(); };
+$('#campSel').onchange = e => { if(e.target.value==='__new'){ e.target.value=ui.camp; openCampForm(); return; } ui.camp=e.target.value; renderAll(); };
+$('#typeChips').addEventListener('click',e=>{ const b=e.target.closest('[data-type]'); if(!b) return; ui.type=b.dataset.type; renderAll(); });
+function togglePick(id){ const i=ui.picked.indexOf(id); if(i>=0) ui.picked.splice(i,1); else { if(ui.picked.length>=4){ toast('一次最多比對 4 個'); return; } ui.picked.push(id); } renderGrid(); renderCmpBar(); }
+$('#grid').addEventListener('click',e=>{
+  const pk=e.target.closest('[data-pick]'); if(pk){ e.stopPropagation(); togglePick(pk.dataset.pick); return; }
+  const tg=e.target.closest('[data-toggle]');
+  if(tg){ const id=tg.dataset.toggle, i=ui.closed.indexOf(id); if(i>=0) ui.closed.splice(i,1); else ui.closed.push(id);
+    store.set('promo_closed',ui.closed); tg.parentElement.classList.toggle('closed', i<0); return; }
+  const row=e.target.closest('.prow[data-id]'); if(row) openDetail(row.dataset.id);
+});
+$('#cmpClear').onclick = () => { ui.picked=[]; renderGrid(); renderCmpBar(); };
+$('#cmpGo').onclick = openCompare;
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]'); if(!b) return; const id=b.dataset.id;
+  switch(b.dataset.act){
+    case 'newPlan': openPlanForm(); break;
+    case 'editPlan': openPlanForm(id); break;
+    case 'savePlan': savePlan(id); break;
+    case 'delPlan': { const x=findPlan(id); if(x && confirm(`確定刪除「${x.p.name}」？`)){ x.c.plans=x.c.plans.filter(p=>p.id!==id); saveCamps(); closeModal(); renderAll(); } break; }
+    case 'copyPlan': { const x=findPlan(id); navigator.clipboard.writeText(planText(x.p,x.c)).then(()=>toast('已複製方案文字 ✓'),()=>toast('複製失敗')); break; }
+    case 'pickFromDetail': togglePick(id); closeModal(); break;
+    case 'editCamp': openCampForm(ui.camp); break;
+    case 'saveCamp': saveCamp(id); break;
+    case 'delCamp': { const c=campaigns.find(c=>c.id===id); if(c && confirm(`確定刪除檔期「${c.name}」和底下 ${(c.plans||[]).length} 個方案？`)){ campaigns=campaigns.filter(x=>x.id!==id); ui.camp='all'; saveCamps(); closeModal(); renderAll(); } break; }
+  }
+});
+
+/* ════════ 雲端同步（與工作站同一套作法）════════ */
+function applyRemote(k,val){
+  try{ localStorage.setItem('ws2_'+k, JSON.stringify(val)); }catch(e){}
+  if(k==='promos') campaigns = val||[];
+  renderAll();
+}
+async function startCloud(){
+  try{
+    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js');
+    const fs = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
+    const db = fs.getFirestore(initializeApp(firebaseConfig));
+    const col = fs.collection(db,'workstations',WORKSPACE_ID,'state');
+    cloud = { write:(k,v)=>{ clearTimeout(writeTimers[k]); writeTimers[k]=setTimeout(()=>{
+      fs.setDoc(fs.doc(col,k),{json:JSON.stringify(v),ts:Date.now()}).then(()=>setSync('on','雲端已同步'))
+        .catch(e=>{ console.error(e); setSync('err','同步失敗'); }); },600); } };
+    for(const k of CLOUD_KEYS){
+      const ref=fs.doc(col,k);
+      try{
+        const snap=await fs.getDoc(ref);
+        if(snap.exists()) applyRemote(k, JSON.parse(snap.data().json));
+        else { const local=localRaw(k); if(local!=null) await fs.setDoc(ref,{json:JSON.stringify(local),ts:Date.now()}); }
+      }catch(e){ console.error(e); }
+      fs.onSnapshot(ref, s=>{ if(!s.exists()) return; const val=JSON.parse(s.data().json);
+        if(JSON.stringify(localRaw(k))===JSON.stringify(val)) return; applyRemote(k,val); },
+        err=>{ console.error(err); setSync('err','同步中斷'); });
+    }
+    setSync('on','雲端已同步');
+  }catch(err){ console.error(err); setSync('err','雲端連線失敗，改用本機'); }
+}
+
+
+renderAll();
+startCloud();
+</script>
+</body>
+</html>

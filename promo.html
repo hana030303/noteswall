@@ -107,6 +107,7 @@ textarea.inp{resize:vertical;line-height:1.6;font-size:13px}
 .tag.t-影音{background:rgba(229,72,150,.12);color:#c2317a}
 .tag.t-社群議題{background:var(--ok-soft);color:#17805a}
 .tag.t-蓋版廣告{background:var(--accent-soft);color:var(--accent-2)}
+.tag.t-廣告曝光{background:var(--warn-soft);color:#9a6b00}
 .pick{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--border-2);background:rgba(255,255,255,.8);display:grid;place-items:center;font-size:13px;color:transparent;flex:none;transition:.15s}
 .pick:hover{border-color:var(--accent)}
 .prow.sel .pick{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -287,7 +288,7 @@ function setSync(cls,txt){ $('#syncStatus').className='status '+cls; $('#syncTxt
 
 /* ════════ 資料 ════════ */
 let campaigns = store.get('promos', []);                     // [{id,name,subtitle,year,start,end,deadline,rules,plans:[…]}]
-const TYPES = ['影音','社群議題','蓋版廣告','其他'];
+const TYPES = ['影音','社群議題','蓋版廣告','廣告曝光','其他'];
 const ui = { q:'', camp:'all', type:'all', sort:'default', picked:[], closed:store.get('promo_closed',[]) };
 
 const saveCamps = () => store.set('promos', campaigns);
