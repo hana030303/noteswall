@@ -98,6 +98,19 @@ textarea.inp{resize:vertical;line-height:1.6;font-size:13px}
 .ghead h3{font-size:15.5px}
 .ghead .gmeta{font-size:12px;color:var(--muted)}
 .grp.closed .gbody{display:none}
+/* 檔期狀態 */
+.cst{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;flex:none}
+.cst::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
+.cst.s-soon{background:var(--accent-soft);color:var(--accent-2)}
+.cst.s-on{background:var(--ok-soft);color:#16804f}
+.cst.s-ending{background:var(--warn-soft);color:#9a6b00}
+.cst.s-post{background:rgba(232,110,40,.14);color:#b8541a}
+.cst.s-done{background:rgba(120,128,150,.16);color:var(--muted)}
+.cst.s-done::before{display:none}
+.ghead .cst{margin-left:auto}
+.grp.ended{opacity:.62}
+.grp.ended:hover{opacity:.9}
+.camp .cst{margin-bottom:6px}
 .gbody{border-top:1px solid var(--border-2)}
 .prow{display:grid;grid-template-columns:22px minmax(200px,2fr) 110px 90px 70px 80px;gap:12px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border-2);font-size:13.5px;cursor:pointer;transition:background .15s}
 .prow:last-child{border-bottom:none}
@@ -341,8 +354,33 @@ function visiblePlans(){
   return list;
 }
 
+/* ════════ 檔期狀態提醒 ════════
+   依今天日期與 推案開始/推案結束/刊登截止 判斷：
+   未開始 → 進行中 → 即將截止（剩 14 天內）→ 推案已截止・刊登中（到刊登截止日）→ 已結束 */
+const ENDING_DAYS = 14;
+const dayOf = s => { const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||''); return m ? new Date(+m[1],m[2]-1,+m[3]) : null; };
+const daysBetween = (a,b) => Math.round((b-a)/86400000);
+const md = s => s.slice(5).replace('-','/');
+function campStatus(c){
+  const t=new Date(); t.setHours(0,0,0,0);
+  const st=dayOf(c.start), en=dayOf(c.end), dl=dayOf(c.deadline);
+  if(!st && !en && !dl) return null;
+  if(st && t<st){ const n=daysBetween(t,st); return {k:'soon',rank:1,short:'未開始',label:n===1?'明天開跑':`${n} 天後開跑`}; }
+  if(en && t<=en){ const n=daysBetween(t,en);
+    if(n<=ENDING_DAYS) return {k:'ending',rank:0,short:'即將截止',label:n===0?'今天推案截止':`即將截止・剩 ${n} 天`};
+    return {k:'on',rank:0,short:'進行中',label:`進行中・剩 ${n} 天`}; }
+  if(dl && t<=dl){ const n=daysBetween(t,dl);
+    return {k:'post',rank:2,short:'推案已截止',label:`推案已截止・刊登至 ${md(c.deadline)}（剩 ${n} 天）`}; }
+  if(!en && !dl) return {k:'on',rank:0,short:'進行中',label:'進行中'};
+  return {k:'done',rank:3,short:'已結束',label:'已結束'};
+}
+const statusBadge = s => s ? `<span class="cst s-${s.k}">${esc(s.label)}</span>` : '';
+const isEnded = c => campStatus(c)?.k==='done';
+// 進行中/即將截止 → 未開始 → 刊登中 → 已結束；同狀態維持原順序
+const campOrder = c => { const s=campStatus(c); return s ? s.rank : 0; };
+
 function renderFilters(){
-  $('#campSel').innerHTML = `<option value="all">全部檔期</option>` + campaigns.map(c=>`<option value="${esc(c.id)}">${esc((c.year?c.year+' ':'')+c.name)}</option>`).join('') + (canEdit ? `<option value="__new">＋ 新增檔期…</option>` : '');
+  $('#campSel').innerHTML = `<option value="all">全部檔期</option>` + [...campaigns].sort((a,b)=>campOrder(a)-campOrder(b)).map(c=>{ const s=campStatus(c); return `<option value="${esc(c.id)}">${esc((c.year?c.year+' ':'')+c.name)}${s?`（${s.short}）`:''}</option>`; }).join('') + (canEdit ? `<option value="__new">＋ 新增檔期…</option>` : '');
   if(ui.camp!=='all' && !campaigns.some(c=>c.id===ui.camp)) ui.camp='all';
   $('#campSel').value = ui.camp;
   const used = TYPES.filter(t=>allPlans().some(x=>x.p.type===t));
@@ -355,7 +393,7 @@ function renderCamp(){
   if(!c){ $('#campBox').innerHTML=''; return; }
   const rules = lines(c.rules);
   $('#campBox').innerHTML = `<div class="camp glass">
-    <div><h2 class="display">${esc((c.year?c.year+' ':'')+c.name)}</h2>
+    <div>${statusBadge(campStatus(c))}<h2 class="display">${esc((c.year?c.year+' ':'')+c.name)}</h2>
       <div class="meta">${esc(c.subtitle||'')}${c.start?` ・ 推案 ${esc(c.start)} ~ ${esc(c.end||'')}`:''}${c.deadline?` ・ 刊登截止 ${esc(c.deadline)}`:''}</div></div>
     <div class="acts edit-only"><button class="btn sm" data-act="newPlan">＋ 新增方案</button><button class="btn sm ghost" data-act="editCamp">編輯檔期</button></div>
     ${rules.length?`<ul class="rules">${rules.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>`:''}
@@ -370,12 +408,16 @@ function renderGrid(){
   if(!list.length){ $('#grid').innerHTML = '<div class="empty glass"><div class="big">🔍</div>沒有符合條件的方案</div>'; return; }
   // 依檔期分組（組內維持目前排序），點標題列可折疊
   const groups = []; for(const x of list){ let g=groups.find(g=>g.c.id===x.c.id); if(!g) groups.push(g={c:x.c,items:[]}); g.items.push(x); }
+  groups.sort((a,b)=>campOrder(a.c)-campOrder(b.c));
   $('#grid').innerHTML = groups.map(({c,items})=>{
     const pr = items.map(x=>x.p.price).filter(Boolean), lo=Math.min(...pr), hi=Math.max(...pr);
-    return `<div class="grp glass ${ui.closed.includes(c.id)?'closed':''}">
+    // 已結束的檔期預設收合（ui.closed 對它代表「使用者手動展開」）
+    const ended = isEnded(c), closed = ended ? !ui.closed.includes(c.id) : ui.closed.includes(c.id);
+    return `<div class="grp glass ${closed?'closed':''} ${ended?'ended':''}">
       <div class="ghead" data-toggle="${esc(c.id)}"><span class="chev">▼</span>
         <div><h3 class="display">${esc((c.year?c.year+' ':'')+c.name)}</h3>
-          <div class="gmeta">${items.length} 個方案${pr.length?' ・ '+(lo===hi?wan(lo):wan(lo)+' – '+wan(hi)):''}${c.start?' ・ '+esc(c.start)+' ~ '+esc(c.end||''):''}</div></div>
+          <div class="gmeta">${items.length} 個方案${pr.length?' ・ '+(lo===hi?wan(lo):wan(lo)+' – '+wan(hi)):''}${c.start?' ・ '+esc(c.start)+' ~ '+esc(c.end||''):''}${c.deadline?' ・ 刊登截止 '+esc(c.deadline):''}</div></div>
+        ${statusBadge(campStatus(c))}
         </div>
       <div class="gbody">
         <div class="prow head"><span></span><span>方案</span><span class="r">價格</span><span class="r c-mv">媒體價值</span><span class="r c-disc">折數</span><span class="r c-imp">廣告曝光</span></div>
@@ -570,7 +612,7 @@ $('#grid').addEventListener('click',e=>{
   const pk=e.target.closest('[data-pick]'); if(pk){ e.stopPropagation(); togglePick(pk.dataset.pick); return; }
   const tg=e.target.closest('[data-toggle]');
   if(tg){ const id=tg.dataset.toggle, i=ui.closed.indexOf(id); if(i>=0) ui.closed.splice(i,1); else ui.closed.push(id);
-    store.set('promo_closed',ui.closed); tg.parentElement.classList.toggle('closed', i<0); return; }
+    store.set('promo_closed',ui.closed); tg.parentElement.classList.toggle('closed'); return; }
   const row=e.target.closest('.prow[data-id]'); if(row) openDetail(row.dataset.id);
 });
 $('#cmpClear').onclick = () => { ui.picked=[]; renderGrid(); renderCmpBar(); };
