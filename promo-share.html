@@ -234,8 +234,9 @@ textarea.inp{resize:vertical;line-height:1.6;font-size:13px}
 
 <script>
 /* ══════════════════════════════════════════════════════════════
-   優惠案管理器 — 單檔前端
-   資料：LocalStorage + Firestore（與工作站同一專案、同一 workspace，key 不同）
+   優惠案查詢（同事版）— 單檔前端，獨立運作
+   資料：LocalStorage（promoShare_）+ Firestore workstations/promo-share/state，
+   與工作站、優惠案管理器的資料完全分開。
    方案資料只存在本機／雲端，不寫進這個公開檔案。
    ══════════════════════════════════════════════════════════════ */
 const $ = s => document.querySelector(s);
@@ -249,16 +250,17 @@ const firebaseConfig = {
   projectId: "work-e04df",
   appId: "1:970046892491:web:9d5e5a0a14508a3f376e4e"
 };
-const WORKSPACE_ID = 'main';
+const WORKSPACE_ID = 'promo-share';   // 獨立資料區，與工作站、優惠案管理器（main）分開
+const LS_PREFIX = 'promoShare_';      // 獨立本機儲存，不與工作站共用
 const CLOUD_KEYS = ['promos'];
 let cloud = null; const writeTimers = {};
 
 const store = {
-  get(k,def){ try{ const v=localStorage.getItem('ws2_'+k); return v==null?def:JSON.parse(v);}catch(e){return def;} },
-  set(k,v){ try{ localStorage.setItem('ws2_'+k, JSON.stringify(v)); }catch(e){ toast('⚠️ 本機儲存空間可能已滿'); }
+  get(k,def){ try{ const v=localStorage.getItem(LS_PREFIX+k); return v==null?def:JSON.parse(v);}catch(e){return def;} },
+  set(k,v){ try{ localStorage.setItem(LS_PREFIX+k, JSON.stringify(v)); }catch(e){ toast('⚠️ 本機儲存空間可能已滿'); }
             if(cloud && CLOUD_KEYS.includes(k)) cloud.write(k,v); }
 };
-const localRaw = k => { try{ const v=localStorage.getItem('ws2_'+k); return v==null?null:JSON.parse(v);}catch(e){return null;} };
+const localRaw = k => { try{ const v=localStorage.getItem(LS_PREFIX+k); return v==null?null:JSON.parse(v);}catch(e){return null;} };
 
 let toastT;
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200); }
@@ -556,9 +558,9 @@ document.addEventListener('click',e=>{
   }
 });
 
-/* ════════ 雲端同步（與工作站同一套作法）════════ */
+/* ════════ 雲端同步（獨立資料區）════════ */
 function applyRemote(k,val){
-  try{ localStorage.setItem('ws2_'+k, JSON.stringify(val)); }catch(e){}
+  try{ localStorage.setItem(LS_PREFIX+k, JSON.stringify(val)); }catch(e){}
   if(k==='promos') campaigns = val||[];
   renderAll();
 }
