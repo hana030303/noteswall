@@ -101,10 +101,7 @@ textarea.inp{resize:vertical;line-height:1.6;font-size:13px}
 /* 檔期狀態 */
 .cst{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;flex:none}
 .cst::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
-.cst.s-soon{background:var(--accent-soft);color:var(--accent-2)}
 .cst.s-on{background:var(--ok-soft);color:#16804f}
-.cst.s-ending{background:var(--warn-soft);color:#9a6b00}
-.cst.s-post{background:rgba(232,110,40,.14);color:#b8541a}
 .cst.s-done{background:rgba(120,128,150,.16);color:var(--muted)}
 .cst.s-done::before{display:none}
 .ghead .cst{margin-left:auto}
@@ -355,28 +352,16 @@ function visiblePlans(){
 }
 
 /* ════════ 檔期狀態提醒 ════════
-   依今天日期與 推案開始/推案結束/刊登截止 判斷：
-   未開始 → 進行中 → 即將截止（剩 14 天內）→ 推案已截止・刊登中（到刊登截止日）→ 已結束 */
-const ENDING_DAYS = 14;
+   只分兩種：推案中（今天 ≤ 推案結束日）／推案結束（已過推案結束日）。沒填推案結束日就不顯示。 */
 const dayOf = s => { const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||''); return m ? new Date(+m[1],m[2]-1,+m[3]) : null; };
-const daysBetween = (a,b) => Math.round((b-a)/86400000);
-const md = s => s.slice(5).replace('-','/');
 function campStatus(c){
+  const en=dayOf(c.end); if(!en) return null;
   const t=new Date(); t.setHours(0,0,0,0);
-  const st=dayOf(c.start), en=dayOf(c.end), dl=dayOf(c.deadline);
-  if(!st && !en && !dl) return null;
-  if(st && t<st){ const n=daysBetween(t,st); return {k:'soon',rank:1,short:'未開始',label:n===1?'明天開跑':`${n} 天後開跑`}; }
-  if(en && t<=en){ const n=daysBetween(t,en);
-    if(n<=ENDING_DAYS) return {k:'ending',rank:0,short:'即將截止',label:n===0?'今天推案截止':`即將截止・剩 ${n} 天`};
-    return {k:'on',rank:0,short:'進行中',label:`進行中・剩 ${n} 天`}; }
-  if(dl && t<=dl){ const n=daysBetween(t,dl);
-    return {k:'post',rank:2,short:'推案已截止',label:`推案已截止・刊登至 ${md(c.deadline)}（剩 ${n} 天）`}; }
-  if(!en && !dl) return {k:'on',rank:0,short:'進行中',label:'進行中'};
-  return {k:'done',rank:3,short:'已結束',label:'已結束'};
+  return t<=en ? {k:'on',rank:0,short:'推案中',label:'推案中'} : {k:'done',rank:1,short:'推案結束',label:'推案結束'};
 }
 const statusBadge = s => s ? `<span class="cst s-${s.k}">${esc(s.label)}</span>` : '';
 const isEnded = c => campStatus(c)?.k==='done';
-// 進行中/即將截止 → 未開始 → 刊登中 → 已結束；同狀態維持原順序
+// 推案中在前、推案結束在後；同狀態維持原順序
 const campOrder = c => { const s=campStatus(c); return s ? s.rank : 0; };
 
 function renderFilters(){
